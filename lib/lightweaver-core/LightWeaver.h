@@ -1,2 +1,2 @@
 #pragma once
-#include "LightWeaver/LightWeaverCore.h";
+#include "LightWeaver/LightWeaverCore.h"
