@@ -42,7 +42,7 @@ namespace LightWeaver {
         }
 
         void setBrightness(uint8_t b) {
-            brightness = b;
+            this.brightness = b;
         }
 
         uint8_t getBrightness() {

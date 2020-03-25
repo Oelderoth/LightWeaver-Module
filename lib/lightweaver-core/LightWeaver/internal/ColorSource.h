@@ -22,4 +22,4 @@ namespace LightWeaver {
         
         virtual ColorSource* clone() const = 0;
     };
-};
+}

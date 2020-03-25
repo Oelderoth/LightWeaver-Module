@@ -39,4 +39,4 @@ namespace LightWeaver {
         void setup(){};
         void loop(){}
     };
-};
+}
