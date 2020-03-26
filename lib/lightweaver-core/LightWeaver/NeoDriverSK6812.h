@@ -1,7 +1,8 @@
 #include <NeoPixelBrightnessBus.h>
 
 #include "internal/Color.h"
-#include "internal/Features.h"
+
+#include "Features.h"
 
 namespace LightWeaver {
     /**

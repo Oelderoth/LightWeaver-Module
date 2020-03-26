@@ -2,7 +2,8 @@
 
 #include "internal/Animator.h"
 #include "internal/ColorSource.h"
-#include "internal/Features.h"
+
+#include "Features.h"
 
 namespace LightWeaver {
     /**
