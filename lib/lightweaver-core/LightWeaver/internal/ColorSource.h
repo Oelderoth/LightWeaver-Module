@@ -18,7 +18,7 @@ namespace LightWeaver {
         // Virtual destructor to allow implementations to cleanup
         virtual ~ColorSource() {};
 
-        virtual RgbColor getColor(float progress) const = 0;
+        virtual RgbaColor getColor(float progress) const = 0;
         
         virtual ColorSource* clone() const = 0;
     };

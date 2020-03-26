@@ -1,78 +1,95 @@
 #include "Animator.h"
 using namespace LightWeaver;
 
-template <typename T> void Animator<T>::AnimationContext::start(T startValue, T endValue, uint16_t duration, Animator<T>::AnimationCallback callback, EasingFunction easingFunction) {
-    this->startValue = startValue;
-    this->endValue = endValue;
+void Animator::AnimationContext::start(uint16_t duration, bool looping, Animator::AnimationCallback callback, EasingFunction easingFunction) {
     this->duration = duration;
     this->remainingDuration = duration;
     this->callback = callback;
     this->state = AnimationState::Started;
     this->easingFunction = easingFunction;
+    this->looping = looping;
 }
 
-template <typename T> void Animator<T>::AnimationContext::stop() {
+void Animator::AnimationContext::stop() {
     this->remainingDuration = 0;
     this->state = AnimationState::Stopped;
 }
 
-template <typename T> float Animator<T>::AnimationContext::progress() {
+float Animator::AnimationContext::progress() {
     return (float)(duration - remainingDuration) / (float)(duration);
 }
 
-template <typename T> bool Animator<T>::AnimationContext::isActive() {
+bool Animator::AnimationContext::isActive() {
+    return (state == AnimationState::Started || state == AnimationState::Running || state == AnimationState::Paused);
+}
+
+bool Animator::AnimationContext::isRunning() {
     return (state == AnimationState::Started || state == AnimationState::Running);
 }
 
-template <typename T> bool Animator<T>::isAnimating() {
+bool Animator::isAnimating() {
     return currentlyRunning > 0;
 }
 
-template <typename T> void Animator<T>::pause() {
+void Animator::pause() {
     for (uint16_t i = 0; i < animationCount; i++) {
         pauseAnimation(i);
     }
 }
 
-template <typename T> void Animator<T>::resume() {
+void Animator::resume() {
     for (uint16_t i = 0; i < animationCount; i++) {
         resumeAnimation(i);
     }
 }
 
-template <typename T> void Animator<T>::stop() {
+void Animator::stop() {
     for (uint16_t i = 0; i < animationCount; i++) {
         stopAnimation(i);
     }
 }
 
-template <typename T> void Animator<T>::startAnimation(uint16_t index, T startValue, T endValue, uint16_t duration, Animator<T>::AnimationCallback callback, EasingFunction easingFunction) {
-    if (index >= animationCount) return;
+uint16_t Animator::startAnimation(uint16_t index, uint16_t duration, bool looping, Animator::AnimationCallback callback, EasingFunction easingFunction) {
+    if (index >= animationCount) {
+        index = animationCount-1;
+    }
 
     // Cleanup any existing animation
     stopAnimation(index);
-    animations[index].start(startValue, endValue, duration, callback, easingFunction);
+    animations[index].start(duration, looping, callback, easingFunction);
+
+    return index;
 }
 
-template <typename T> void Animator<T>::stopAnimation(uint16_t index) {
+uint16_t Animator::startAnimation(uint16_t duration, bool looping, Animator::AnimationCallback callback, EasingFunction easingFunction) {
+    for (uint16_t i = 0; i < animationCount; i++) {
+        if (!animations[i].isActive())
+        {
+            return startAnimation(i, duration, looping, callback, easingFunction);
+        }
+    }
+    return startAnimation(animationCount-1, duration, looping, callback, easingFunction);
+}
+
+void Animator::stopAnimation(uint16_t index) {
     animations[index].stop();
 }
 
-template <typename T> void Animator<T>::pauseAnimation(uint16_t index) {
+void Animator::pauseAnimation(uint16_t index) {
     AnimationContext& context = animations[index];
     if (context.state == AnimationState::Running) {
         context.state = AnimationState::Paused;
     }
 }
 
-template <typename T> void Animator<T>::resumeAnimation(uint16_t index) {
+void Animator::resumeAnimation(uint16_t index) {
     AnimationContext& context = animations[index];
     if (context.state == AnimationState::Paused) {
         context.state = AnimationState::Running;
     }
 }
 
-template <typename T> void Animator<T>::loop()  {
+void Animator::loop()  {
     unsigned long tick = millis();
     unsigned long delta = tick - previousTick;
     if (delta > timescale) {
@@ -84,7 +101,7 @@ template <typename T> void Animator<T>::loop()  {
             AnimationParam param;
             param.index = i;
             
-            if (!context.isActive()) continue;
+            if (!context.isRunning()) continue;
 
             if (context.remainingDuration > delta) { // Animation is running
                 param.state = context.state;
@@ -96,8 +113,13 @@ template <typename T> void Animator<T>::loop()  {
                 }
             } else if (context.remainingDuration > 0) { // Animation is over
                 param.progress = 1.0f;
-                context.remainingDuration = 0;
-                context.state = AnimationState::Completed;
+                param.easedProgress = 1.0f;
+                if (context.looping) {
+                    context.remainingDuration = context.duration;
+                } else {
+                    context.remainingDuration = 0;
+                    context.state = AnimationState::Completed;
+                }
                 param.state = context.state;
             }
             if (context.callback) {
@@ -106,9 +128,3 @@ template <typename T> void Animator<T>::loop()  {
         }
     }
 }
-
-// Explicitly declare the supported types
-template class Animator<uint8_t>;
-template class Animator<uint16_t>;
-template class Animator<uint32_t>;
-template class Animator<float>;

@@ -76,7 +76,7 @@ class GradientColorSource : public ColorSource {
         colorPositions = nullptr;
     }
 
-    LightWeaver::RgbColor getColor(float progress) const {
+    LightWeaver::RgbaColor getColor(float progress) const {
         uint8_t effectivePosition = (int)(progress * 255);
 
         // Assume that any space before the first color is part of the first color

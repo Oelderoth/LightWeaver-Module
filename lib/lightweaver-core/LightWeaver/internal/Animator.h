@@ -4,7 +4,7 @@
 
 namespace LightWeaver {
 
-    enum AnimationState {
+    enum class AnimationState {
         Started,
         Running,
         Paused,
@@ -27,24 +27,23 @@ namespace LightWeaver {
         DECASECOND = 10000
     };
 
-    template<typename T>
     class Animator {
         typedef std::function<void(const AnimationParam&)> AnimationCallback;
 
         struct AnimationContext {
-            T startValue;
-            T endValue;
             uint16_t duration;
             uint16_t remainingDuration;
+            bool looping;
             AnimationCallback callback;
             AnimationState state;
             EasingFunction easingFunction;
 
-            AnimationContext(): startValue(T()), endValue(T()), duration(0), remainingDuration(0), callback(nullptr), state(AnimationState::Stopped), easingFunction(nullptr) {};
-            void start(T startValue, T endValue, uint16_t duration, AnimationCallback callback, EasingFunction easingFunction);
+            AnimationContext(): duration(0), remainingDuration(0), looping(false), callback(nullptr), state(AnimationState::Stopped), easingFunction(nullptr) {};
+            void start(uint16_t duration, bool looping, AnimationCallback callback, EasingFunction easingFunction);
             void stop();
             float progress();
             bool isActive();
+            bool isRunning();
         };        
 
         uint16_t animationCount;
@@ -52,10 +51,6 @@ namespace LightWeaver {
         unsigned long previousTick;
         AnimationContext* animations;
         uint16_t currentlyRunning;
-
-        T interpolateValue(T start, T end, float progress) {
-            return (end - start) * progress + start;
-        }
         
         public:
         Animator(uint16_t animationCount, uint16_t timescale = 1): animationCount(animationCount), timescale(timescale), previousTick(millis()), animations(new AnimationContext[animationCount]), currentlyRunning(0) {};
@@ -67,7 +62,8 @@ namespace LightWeaver {
         void resume();
         void stop();
 
-        void startAnimation(uint16_t index, T startValue, T endValue, uint16_t duration, AnimationCallback callback, EasingFunction easingFunction = Easing::Linear);
+        uint16_t startAnimation(uint16_t index, uint16_t duration, bool looping, AnimationCallback callback, EasingFunction easingFunction = Easing::Linear);
+        uint16_t startAnimation(uint16_t duration, bool looping, AnimationCallback callback, EasingFunction easingFunction = Easing::Linear);
         void stopAnimation(uint16_t index);
         void pauseAnimation(uint16_t index);
         void resumeAnimation(uint16_t index);
