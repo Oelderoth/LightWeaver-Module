@@ -1,6 +1,6 @@
 #pragma once
 #include <Arduino.h>
-#include "Easing.h"
+#include "../Easing.h"
 
 namespace LightWeaver {
 

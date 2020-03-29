@@ -1,6 +1,6 @@
 #pragma once
 
-#include "internal/Animator.h"
+#include "animation/Animator.h"
 #include "internal/ColorSource.h"
 
 #include "Features.h"
