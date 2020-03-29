@@ -14,6 +14,12 @@ namespace LightWeaver {
                 if (!context.isRunning()) continue;
                 currentlyRunningAnimations++;
 
+                if (context.state == AnimationState::Started) {
+                    context.callback(AnimationParam(0.0f, context.animation.easingFunction(0.0f), context.iterations, AnimationState::Started));
+                    context.state = AnimationState::Running;
+                    continue;
+                }
+
                 if (context.remainingDuration <= delta) {
                     if (context.animation.loop) {
                         context.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), context.iterations, AnimationState::Running));
@@ -24,12 +30,6 @@ namespace LightWeaver {
                         context.stop();
                         continue;
                     }
-                }
-
-                if (context.state == AnimationState::Started) {
-                    context.callback(AnimationParam(0.0f, context.animation.easingFunction(0.0f), context.iterations, AnimationState::Started));
-                    context.state = AnimationState::Running;
-                    continue;
                 }
 
                 float progress = (float)(context.animation.duration - context.remainingDuration) / (float)(context.animation.duration);

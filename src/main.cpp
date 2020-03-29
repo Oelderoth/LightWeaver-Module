@@ -5,6 +5,7 @@
 
 #include "SolidColorSource.h"
 #include "FadeColorSource.h"
+#include "OverlayColorSource.h"
 
 using namespace LightWeaver;
 
@@ -12,18 +13,24 @@ using namespace LightWeaver;
 #define PIXEL_GROUP_SIZE 1
 
 LightWeaverCore<NeoDriverSK6812_RGBW<PIXEL_GROUP_SIZE>> lightWeaver(PIXEL_COUNT, 255);
-Animator animator(2);
 
-SolidRedColorSource solidColorSource = SolidRedColorSource(0x0002,
+SolidRedColorSource solidColorSource = SolidRedColorSource(0x0004,
     LightWeaver::RgbColor(255,0,0));
 
-SolidRedColorSource solidWhiteColorSource = SolidRedColorSource(0x0002,
+SolidRedColorSource solidWhiteColorSource = SolidRedColorSource(0x0003,
     LightWeaver::RgbColor(255,255,255));
 
-FadeColorSource fadeColorSource = FadeColorSource(0x0001,
-    LightWeaver::RgbColor(0,0,0),
-    LightWeaver::RgbColor(255,255,255),
-    3000, true, Easing::Mirror(Easing::CubicInOut));
+FadeColorSource fadeColorSource = FadeColorSource(0x0002,
+    LightWeaver::RgbColor(255,0,0),
+    LightWeaver::RgbColor(0,0,255),
+    7000, true, Easing::Mirror(Easing::Linear));
+
+FadeColorSource transparentFadeColorSource = FadeColorSource(0x0001,
+    LightWeaver::RgbaColor(255,255,255,0),
+    LightWeaver::RgbaColor(255,255,255,196),
+    3333, true, Easing::Mirror(Easing::CubicInOut));
+
+OverlayColorSource overlayColorSource = OverlayColorSource(0xFFFF, fadeColorSource, transparentFadeColorSource);
 
 void setup()
 {
@@ -31,25 +38,13 @@ void setup()
     while(!Serial);
     
     lightWeaver.setup();
-    lightWeaver.setColorSource(solidWhiteColorSource);
+    lightWeaver.setColorSource(overlayColorSource);
     lightWeaver.setBrightness(255);
 
-    animator.setup();
-    animator.playAnimation(Animation(5000,true,[](const AnimationParam& param) {
-        if (param.progress == 1.0f) {
-            if (param.iterations % 2 == 0) {
-                // lightWeaver.setColorSource(fadeColorSource);
-                lightWeaver.setBrightness(32);
-            } else {
-                // lightWeaver.setColorSource(solidColorSource);
-                lightWeaver.setBrightness(255);
-            }
-        }
-    }));
+
 }
 
 void loop()
 {
     lightWeaver.loop();
-    animator.loop();
 }
