@@ -62,6 +62,12 @@ namespace LightWeaver {
                 bool isRunning() {
                     return state == AnimationState::Started || state == AnimationState::Running;
                 }
+
+                void callback(const AnimationParam& param) {
+                    if (animation.callback) {
+                        animation.callback(param);
+                    }
+                }
             };
 
             uint16_t maxAnimations;

@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include <LightWeaver.h>
+#include <LightWeaver/NeoDriverSK6812.h>
 #include <LightWeaver/animation/Animator.h>
+
+#include "SolidColorSource.h"
 
 using namespace LightWeaver;
 
@@ -15,7 +18,7 @@ void setup()
     while(!Serial);
 
     lightWeaver.setup();
-    lightWeaver.setColorSource(GradientColorSource(0x00000003, 5000, 7, colors, Easing::Linear));
+    lightWeaver.setColorSource(SolidRedColorSource(0x0001, LightWeaver::RgbColor(255,0,0)));
     lightWeaver.setBrightness(255);
 }
 

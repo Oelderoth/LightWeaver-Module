@@ -15,18 +15,18 @@ namespace LightWeaver {
 
                 if (context.remainingDuration <= delta) {
                     if (context.animation.loop) {
-                        context.animation.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), AnimationState::Running));
+                        context.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), AnimationState::Running));
                         context.remainingDuration = context.animation.duration;
                         continue;
                     } else {
-                        context.animation.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), AnimationState::Completed));
+                        context.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), AnimationState::Completed));
                         context.stop();
                         continue;
                     }
                 }
 
                 if (context.state == AnimationState::Started) {
-                    context.animation.callback(AnimationParam(0.0f, context.animation.easingFunction(0.0f), AnimationState::Started));
+                    context.callback(AnimationParam(0.0f, context.animation.easingFunction(0.0f), AnimationState::Started));
                     context.state = AnimationState::Running;
                     continue;
                 }
@@ -34,7 +34,7 @@ namespace LightWeaver {
                 float progress = (float)(context.animation.duration - context.remainingDuration) / (float)(context.animation.duration);
                 context.remainingDuration -= delta;
 
-                context.animation.callback(AnimationParam(progress, context.animation.easingFunction(progress), context.state));
+                context.callback(AnimationParam(progress, context.animation.easingFunction(progress), context.state));
 
             }
         }
