@@ -62,10 +62,13 @@ namespace LightWeaver {
         }
     }
 
-    Animator::AnimationHandle* Animator::playAnimation(uint16_t index, Animation& animation) const {
+    Animator::AnimationHandle* Animator::playAnimation(uint16_t index, const Animation& animation) const {
         if (index >= maxAnimations) {
-            index = maxAnimations - 1;
+            Serial.println("Invalid animation slot");
+            return nullptr;
         }
+
+        animations[index].stop();
 
         uint16_t uid = (uint16_t) random(0xFFFF+1);
         animations[index].start(uid, animation, AnimationState::Started);
@@ -73,13 +76,19 @@ namespace LightWeaver {
         return new AnimationHandle(uid, index);
     }
 
-    Animator::AnimationHandle* Animator::playAnimation(Animation& animation) const {
+    Animator::AnimationHandle* Animator::playAnimation(const Animation& animation) const {
         for (uint16_t i = 0; i < maxAnimations; i++) {
             if (!animations[i].isActive()) {
                 return playAnimation(i, animation);
             }
         }
-        return playAnimation(maxAnimations - 1, animation);
+        Serial.println("No available animation slots");
+        return nullptr;
+    }
+
+    Animator::AnimationHandle* Animator::playAnimation(const Animation* animation) const {
+        if (!animation) return nullptr;
+        return playAnimation(*animation);
     }
 
     void Animator::stopAnimation(Animator::AnimationHandle& animation) const {
@@ -88,15 +97,30 @@ namespace LightWeaver {
         }
     }
 
+    void Animator::stopAnimation(Animator::AnimationHandle* animation) const {
+        if (!animation) return;
+        return stopAnimation(*animation);
+    }
+
     void Animator::pauseAnimation(Animator::AnimationHandle& animation) const {
         if (animation.uid == animations[animation.animationIndex].uid) {
             animations[animation.animationIndex].pause();
         }
     }
 
+    void Animator::pauseAnimation(Animator::AnimationHandle* animation) const {
+        if (!animation) return;
+        return pauseAnimation(*animation);
+    }
+
     void Animator::resumeAnimation(Animator::AnimationHandle& animation) const {
         if (animation.uid == animations[animation.animationIndex].uid) {
             animations[animation.animationIndex].resume();
         }
+    }
+
+    void Animator::resumeAnimation(Animator::AnimationHandle* animation) const {
+        if (!animation) return;
+        return resumeAnimation(*animation);
     }
 }

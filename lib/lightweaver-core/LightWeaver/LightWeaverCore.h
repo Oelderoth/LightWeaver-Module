@@ -36,6 +36,7 @@ namespace LightWeaver {
         Animator animator{3, Animator::AnimatorTimescale::MILLISECOND};
 
         ColorSource* backgroundColorSource = nullptr;
+        Animator::AnimationHandle* backgroundHandle = nullptr;
 
 
         RgbColor getDisplayColor() {
@@ -51,6 +52,9 @@ namespace LightWeaver {
         LightWeaverCore(uint8_t pixelCount, uint8_t brightness = 255) : driver(T_DRIVER(pixelCount)), brightness(brightness) {}
         ~LightWeaverCore(){
             delete backgroundColorSource;
+            backgroundColorSource = nullptr;
+            delete backgroundHandle;
+            backgroundHandle = nullptr;
         }
 
         void setup()
@@ -74,9 +78,17 @@ namespace LightWeaver {
             return this->brightness;
         }
 
-        void setColorSource(const ColorSource& cs) {
+        void clearColorSource() {
             delete backgroundColorSource;
+            animator.stopAnimation(backgroundHandle);
+            delete backgroundHandle;
+        }
+
+        void setColorSource(const ColorSource& cs) {
+            clearColorSource();
             backgroundColorSource = cs.clone();
+            const Animation* anim = backgroundColorSource->getAnimation();
+            backgroundHandle = animator.playAnimation(anim);
         }
     };
 };

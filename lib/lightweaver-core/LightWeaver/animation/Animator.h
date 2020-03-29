@@ -28,7 +28,7 @@ namespace LightWeaver {
                 // Used to ensure that an AnimationHandle is pointed at the correct AnimationContext
                 uint16_t uid;
                 Animation animation;
-                AnimationState state;
+                AnimationState state = AnimationState::Stopped;
                 uint16_t remainingDuration;
                 uint32_t lastTicked;
 
@@ -75,8 +75,6 @@ namespace LightWeaver {
             AnimatorTimescale timescale;
             unsigned long previousTick;
             uint16_t currentlyRunningAnimations;
-
-            AnimationHandle* playAnimation(uint16_t index, Animation& animation) const;
         public:
             Animator(uint16_t maxAnimations, AnimatorTimescale timescale = AnimatorTimescale::MILLISECOND): 
                 maxAnimations(maxAnimations), 
@@ -93,10 +91,15 @@ namespace LightWeaver {
             void pause();
             void resume();
             void stop();
-
-            AnimationHandle* playAnimation(Animation& animation) const;
+            
+            AnimationHandle* playAnimation(uint16_t index, const Animation& animation) const;
+            AnimationHandle* playAnimation(const Animation& animation) const;
+            AnimationHandle* playAnimation(const Animation* animation) const;
             void stopAnimation(AnimationHandle& animation) const;
+            void stopAnimation(AnimationHandle* animation) const;
             void pauseAnimation(AnimationHandle& animation) const;
+            void pauseAnimation(AnimationHandle* animation) const;
             void resumeAnimation(AnimationHandle& animation) const;
+            void resumeAnimation(AnimationHandle* animation) const;
     };
 }

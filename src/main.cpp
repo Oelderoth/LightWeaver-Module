@@ -3,7 +3,7 @@
 #include <LightWeaver/NeoDriverSK6812.h>
 #include <LightWeaver/animation/Animator.h>
 
-#include "SolidColorSource.h"
+#include "FadeColorSource.h"
 
 using namespace LightWeaver;
 
@@ -17,8 +17,13 @@ void setup()
     Serial.begin(115200);
     while(!Serial);
 
+    FadeColorSource colorSource = FadeColorSource(0x0001, 
+        LightWeaver::RgbColor(0,0,0),
+        LightWeaver::RgbColor(255,255,255),
+        5000, true, Easing::Mirror(Easing::Linear));
+
     lightWeaver.setup();
-    lightWeaver.setColorSource(SolidRedColorSource(0x0001, LightWeaver::RgbColor(255,0,0)));
+    lightWeaver.setColorSource(colorSource);
     lightWeaver.setBrightness(255);
 }
 
