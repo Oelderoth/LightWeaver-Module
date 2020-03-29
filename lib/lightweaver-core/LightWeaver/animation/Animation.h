@@ -16,11 +16,13 @@ namespace LightWeaver {
     struct AnimationParam {
         float progress;
         float easedProgress;
+        uint8_t iterations;
         AnimationState state;
 
-        AnimationParam(float progress, float easedProgress, AnimationState state): 
+        AnimationParam(float progress, float easedProgress, uint8_t iterations, AnimationState state): 
             progress(progress), 
             easedProgress(easedProgress), 
+            iterations(iterations),
             state(state) {}
     };
 

@@ -11,7 +11,6 @@ class SolidRedColorSource : public LightWeaver::ColorSource {
             color(color) {}
 
         virtual LightWeaver::RgbaColor getColor() const {
-            Serial.println("Hai");
             return color;
         }
 

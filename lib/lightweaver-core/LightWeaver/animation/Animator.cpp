@@ -12,21 +12,22 @@ namespace LightWeaver {
             for (uint16_t i = 0; i < maxAnimations; i++) {
                 Animator::AnimationContext& context = animations[i];
                 if (!context.isRunning()) continue;
+                currentlyRunningAnimations++;
 
                 if (context.remainingDuration <= delta) {
                     if (context.animation.loop) {
-                        context.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), AnimationState::Running));
-                        context.remainingDuration = context.animation.duration;
+                        context.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), context.iterations, AnimationState::Running));
+                        context.loop();
                         continue;
                     } else {
-                        context.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), AnimationState::Completed));
+                        context.callback(AnimationParam(1.0f, context.animation.easingFunction(1.0f), context.iterations, AnimationState::Completed));
                         context.stop();
                         continue;
                     }
                 }
 
                 if (context.state == AnimationState::Started) {
-                    context.callback(AnimationParam(0.0f, context.animation.easingFunction(0.0f), AnimationState::Started));
+                    context.callback(AnimationParam(0.0f, context.animation.easingFunction(0.0f), context.iterations, AnimationState::Started));
                     context.state = AnimationState::Running;
                     continue;
                 }
@@ -34,7 +35,7 @@ namespace LightWeaver {
                 float progress = (float)(context.animation.duration - context.remainingDuration) / (float)(context.animation.duration);
                 context.remainingDuration -= delta;
 
-                context.callback(AnimationParam(progress, context.animation.easingFunction(progress), context.state));
+                context.callback(AnimationParam(progress, context.animation.easingFunction(progress), context.iterations, context.state));
 
             }
         }
@@ -62,65 +63,53 @@ namespace LightWeaver {
         }
     }
 
-    Animator::AnimationHandle* Animator::playAnimation(uint16_t index, const Animation& animation) const {
+    uint16_t Animator::playAnimation(uint16_t index, const Animation& animation) const {
         if (index >= maxAnimations) {
-            Serial.println("Invalid animation slot");
-            return nullptr;
+            return 0xFFFF;
         }
 
         animations[index].stop();
 
-        uint16_t uid = (uint16_t) random(0xFFFF+1);
-        animations[index].start(uid, animation, AnimationState::Started);
+        uint16_t uid = (uint16_t) random(0xFFFF);
+        animations[index].start(uid, animation);
             
-        return new AnimationHandle(uid, index);
+        return index;
     }
 
-    Animator::AnimationHandle* Animator::playAnimation(const Animation& animation) const {
+    uint16_t Animator::playAnimation(uint16_t index, const Animation* animation) const {
+        if (!animation) return 0xFFFF;
+        return playAnimation(index, *animation);
+    }
+
+    uint16_t Animator::playAnimation(const Animation& animation) const {
         for (uint16_t i = 0; i < maxAnimations; i++) {
             if (!animations[i].isActive()) {
                 return playAnimation(i, animation);
             }
         }
-        Serial.println("No available animation slots");
-        return nullptr;
+        return playAnimation(maxAnimations-1, animation);
     }
 
-    Animator::AnimationHandle* Animator::playAnimation(const Animation* animation) const {
-        if (!animation) return nullptr;
+    uint16_t Animator::playAnimation(const Animation* animation) const {
+        if (!animation) return 0xFFFF;
         return playAnimation(*animation);
     }
 
-    void Animator::stopAnimation(Animator::AnimationHandle& animation) const {
-        if (animation.uid == animations[animation.animationIndex].uid) {
-            animations[animation.animationIndex].stop();
+    void Animator::stopAnimation(uint16_t animation) const {
+        if (animation < maxAnimations) {
+            animations[animation].stop();
         }
     }
 
-    void Animator::stopAnimation(Animator::AnimationHandle* animation) const {
-        if (!animation) return;
-        return stopAnimation(*animation);
-    }
-
-    void Animator::pauseAnimation(Animator::AnimationHandle& animation) const {
-        if (animation.uid == animations[animation.animationIndex].uid) {
-            animations[animation.animationIndex].pause();
+    void Animator::pauseAnimation(uint16_t animation) const {
+        if (animation < maxAnimations) {
+            animations[animation].pause();
         }
     }
 
-    void Animator::pauseAnimation(Animator::AnimationHandle* animation) const {
-        if (!animation) return;
-        return pauseAnimation(*animation);
-    }
-
-    void Animator::resumeAnimation(Animator::AnimationHandle& animation) const {
-        if (animation.uid == animations[animation.animationIndex].uid) {
-            animations[animation.animationIndex].resume();
+    void Animator::resumeAnimation(uint16_t animation) const {
+        if (animation < maxAnimations) {
+            animations[animation].resume();
         }
-    }
-
-    void Animator::resumeAnimation(Animator::AnimationHandle* animation) const {
-        if (!animation) return;
-        return resumeAnimation(*animation);
     }
 }

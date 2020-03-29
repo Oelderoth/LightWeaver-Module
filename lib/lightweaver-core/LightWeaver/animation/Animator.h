@@ -5,16 +5,6 @@
 namespace LightWeaver {
     struct Animator {
         public:
-            struct AnimationHandle {
-                private:
-                    uint16_t animationIndex;
-                    
-                    AnimationHandle(uint16_t uid, uint16_t animationIndex): animationIndex(animationIndex), uid(uid) {}
-                    friend class Animator;
-                public:
-                    uint16_t uid;
-            };
-
             enum AnimatorTimescale {
                 MILLISECOND = 1,
                 CENTISECOND = 10,
@@ -31,12 +21,14 @@ namespace LightWeaver {
                 AnimationState state = AnimationState::Stopped;
                 uint16_t remainingDuration;
                 uint32_t lastTicked;
+                uint8_t iterations = 0;
 
-                void start(uint16_t uid, Animation animation, AnimationState state) {
+                void start(uint16_t uid, Animation animation) {
                     this->uid = uid;
                     this->animation = animation;
-                    this->state = state;
+                    this->state = AnimationState::Started;
                     this->remainingDuration = animation.duration;
+                    this->iterations = 0;
                 }
 
                 void stop() {
@@ -53,6 +45,11 @@ namespace LightWeaver {
                     if (this->state == AnimationState::Paused) {
                         this->state = AnimationState::Running;
                     }
+                }
+
+                void loop() {
+                    this->remainingDuration = this->animation.duration;
+                    this->iterations++;
                 }
 
                 bool isActive() {
@@ -77,8 +74,8 @@ namespace LightWeaver {
             uint16_t currentlyRunningAnimations;
         public:
             Animator(uint16_t maxAnimations, AnimatorTimescale timescale = AnimatorTimescale::MILLISECOND): 
-                maxAnimations(maxAnimations), 
-                animations(new AnimationContext[maxAnimations]),
+                maxAnimations(maxAnimations >= 0xFFFF ? 0xFFFF-1 : maxAnimations), 
+                animations(new AnimationContext[maxAnimations >= 0xFFFF ? 0xFFFF-1 : maxAnimations]),
                 timescale(timescale),
                 previousTick(millis()),
                 currentlyRunningAnimations(0) {}
@@ -92,14 +89,12 @@ namespace LightWeaver {
             void resume();
             void stop();
             
-            AnimationHandle* playAnimation(uint16_t index, const Animation& animation) const;
-            AnimationHandle* playAnimation(const Animation& animation) const;
-            AnimationHandle* playAnimation(const Animation* animation) const;
-            void stopAnimation(AnimationHandle& animation) const;
-            void stopAnimation(AnimationHandle* animation) const;
-            void pauseAnimation(AnimationHandle& animation) const;
-            void pauseAnimation(AnimationHandle* animation) const;
-            void resumeAnimation(AnimationHandle& animation) const;
-            void resumeAnimation(AnimationHandle* animation) const;
+            uint16_t playAnimation(const uint16_t index, const Animation& animation) const;
+            uint16_t playAnimation(const uint16_t index, const Animation* animation) const;
+            uint16_t playAnimation(const Animation& animation) const;
+            uint16_t playAnimation(const Animation* animation) const;
+            void stopAnimation(uint16_t animation) const;
+            void pauseAnimation(uint16_t animation) const;
+            void resumeAnimation(uint16_t animation) const;
     };
 }
