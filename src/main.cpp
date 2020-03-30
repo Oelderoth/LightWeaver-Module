@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <LightWeaver.h>
-#include <LightWeaver/NeoDriverSK6812.h>
-#include <LightWeaver/animation/Animator.h>
+#include <LightWeaver/drivers/NeoDriverSK6812.h>
 
 #include "SolidColorSource.h"
 #include "FadeColorSource.h"
@@ -40,8 +39,6 @@ void setup()
     lightWeaver.setup();
     lightWeaver.setColorSource(overlayColorSource);
     lightWeaver.setBrightness(255);
-
-
 }
 
 void loop()

@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include "internal/Color.h"
+
+#include "Color.h"
 #include "animation/Animation.h"
 
 namespace LightWeaver {
