@@ -1,9 +1,10 @@
 #include <Arduino.h>
-
 #include <LightWeaver.h>
-#include <LightWeaver/NeoDriverSK6812.h>
+#include <LightWeaver/drivers/NeoDriverSK6812.h>
 
-#include "GradientColorSource.h"
+#include "SolidColorSource.h"
+#include "FadeColorSource.h"
+#include "OverlayColorSource.h"
 
 using namespace LightWeaver;
 
@@ -12,50 +13,31 @@ using namespace LightWeaver;
 
 LightWeaverCore<NeoDriverSK6812_RGBW<PIXEL_GROUP_SIZE>> lightWeaver(PIXEL_COUNT, 255);
 
-class SolidRedColorSource : public ColorSource {
-    public:
-    SolidRedColorSource(uint32_t identifier) : ColorSource(identifier, 0) {}
+SolidRedColorSource solidColorSource = SolidRedColorSource(0x0004,
+    LightWeaver::RgbColor(255,0,0));
 
-    LightWeaver::RgbaColor getColor(float progress) const {
-        return LightWeaver::RgbColor(255,0,0);
-    }
+SolidRedColorSource solidWhiteColorSource = SolidRedColorSource(0x0003,
+    LightWeaver::RgbColor(255,255,255));
 
-    ColorSource* clone() const {
-        return new SolidRedColorSource(identifier);
-    }
-};
+FadeColorSource fadeColorSource = FadeColorSource(0x0002,
+    LightWeaver::RgbColor(255,0,0),
+    LightWeaver::RgbColor(0,0,255),
+    7000, true, Easing::Mirror(Easing::Linear));
+
+FadeColorSource transparentFadeColorSource = FadeColorSource(0x0001,
+    LightWeaver::RgbaColor(255,255,255,0),
+    LightWeaver::RgbaColor(255,255,255,196),
+    3333, true, Easing::Mirror(Easing::CubicInOut));
+
+OverlayColorSource overlayColorSource = OverlayColorSource(0xFFFF, fadeColorSource, transparentFadeColorSource);
 
 void setup()
 {
     Serial.begin(115200);
     while(!Serial);
-
-    LightWeaver::RgbColor colors[] = {
-        LightWeaver::RgbColor(255, 000, 000),
-        LightWeaver::RgbColor(255, 255, 000),
-        LightWeaver::RgbColor(000, 255, 000),
-        LightWeaver::RgbColor(000, 255, 255),
-        LightWeaver::RgbColor(000, 000, 255),
-        LightWeaver::RgbColor(255, 000, 255),
-        LightWeaver::RgbColor(255, 000, 000)
-    };
-
-    // LightWeaver::RgbColor whiteFlash[] = {
-    //     LightWeaver::RgbColor(000, 000, 000),
-    //     LightWeaver::RgbColor(255, 255, 255),
-    //     LightWeaver::RgbColor(000, 000, 000),
-    //     LightWeaver::RgbColor(000, 000, 000)
-    // };
-
-    // uint8_t whiteFlashPositions[] = {
-    //     0,
-    //     32,
-    //     128,
-    //     255
-    // };
-
+    
     lightWeaver.setup();
-    lightWeaver.setColorSource(GradientColorSource(0x00000003, 5000, 7, colors, Easing::Linear));
+    lightWeaver.setColorSource(overlayColorSource);
     lightWeaver.setBrightness(255);
 }
 

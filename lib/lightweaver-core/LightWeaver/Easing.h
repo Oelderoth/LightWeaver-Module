@@ -108,5 +108,21 @@ namespace LightWeaver {
             p -= 1.0f;
             return 0.5 * (-pow(2, -10.f * p) + 2);
         }        
+
+        inline EasingFunction Reverse(EasingFunction originalFunction) {
+            return [originalFunction](float p) {
+                return originalFunction(1.0f - p);
+            };
+        }
+
+        inline EasingFunction Mirror(EasingFunction originalFunction) {
+            return [originalFunction](float p) {
+                if (p > 0.5f) {
+                    return originalFunction(2.0f * (1.0f - p));
+                } else {
+                    return originalFunction(2.0f * p);
+                }
+            };
+        }
     }
 }
