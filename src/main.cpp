@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <LightWeaver.h>
+#include <LightWeaverWifi.h>
 #include <LightWeaver/drivers/NeoDriverSK6812.h>
 
 #include "SolidColorSource.h"
@@ -18,6 +19,7 @@ void setup()
     Serial.begin(115200);
     while(!Serial);
     
+    lightWeaver.addPlugin<LightWeaverWifi>();
     lightWeaver.setup();
     lightWeaver.setBrightness(255);
 }
