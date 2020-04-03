@@ -99,7 +99,7 @@ namespace LightWeaver {
 
         template <typename PLUGIN>
         bool addPlugin() {
-            if (currentPlugins >= MAXIMUM_PLUGINS - 1) return false;
+            if (currentPlugins >= MAXIMUM_PLUGINS) return false;
             plugins[currentPlugins++] = new PLUGIN(*this);
             return true;
         }
@@ -146,11 +146,6 @@ namespace LightWeaver {
             return this->brightness;
         }
 
-        virtual void clearColorSource() {
-            animator.stopAnimation(BACKGROUND_ANIMATION);
-            delete backgroundColorSource;
-        }
-
         void startColorTransition() {
             RgbColor color = getDisplayColor();
             animator.stopAnimation(COLOR_TRANSITION_ANIMATION);
@@ -159,8 +154,14 @@ namespace LightWeaver {
             animator.playAnimation(COLOR_TRANSITION_ANIMATION, colorTransition->animation);
         }
 
-        virtual void setColorSource(const ColorSource& cs) {
+        virtual void clearColorSource() {
             startColorTransition();
+            animator.stopAnimation(BACKGROUND_ANIMATION);
+            delete backgroundColorSource;
+            backgroundColorSource = nullptr;
+        }
+
+        virtual void setColorSource(const ColorSource& cs) {
             clearColorSource();
 
             backgroundColorSource = cs.clone();

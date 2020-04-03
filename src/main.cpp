@@ -1,11 +1,8 @@
 #include <Arduino.h>
 #include <LightWeaver.h>
 #include <LightWeaverWifi.h>
+#include <LightWeaverHttpServer.h>
 #include <LightWeaver/drivers/NeoDriverSK6812.h>
-
-#include "SolidColorSource.h"
-#include "FadeColorSource.h"
-#include "OverlayColorSource.h"
 
 using namespace LightWeaver;
 
@@ -20,6 +17,7 @@ void setup()
     while(!Serial);
     
     lightWeaver.addPlugin<LightWeaverWifi>();
+    lightWeaver.addPlugin<LightWeaverHttpServer>();
     lightWeaver.setup();
     lightWeaver.setBrightness(255);
 }

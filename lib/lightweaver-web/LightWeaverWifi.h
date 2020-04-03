@@ -2,9 +2,9 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <LightWeaver/LightWeaverPlugin.h>
+#include <LightWeaver/colorSources/FadeColorSource.h>
 
 #include "AsyncWifiManager.h"
-#include "FadeColorSource.h"
 
 namespace LightWeaver {
     class LightWeaverWifi : public LightWeaverPlugin {
@@ -12,7 +12,7 @@ namespace LightWeaver {
             AsyncWifiManager wifiManager;
 
             void playIdleAnimation() {
-                lightWeaver->setColorSource(LightWeaverServer::FadeColorSource{0x0001,
+                lightWeaver->setColorSource(LightWeaver::FadeColorSource{0x0001,
                     LightWeaver::RgbColor(128,128,128),
                     LightWeaver::RgbColor(255,255,255),
                     5000, true, Easing::Mirror(Easing::QuadraticInOut)});
@@ -24,13 +24,13 @@ namespace LightWeaver {
             }
 
             virtual void setup() {
-                WiFi.disconnect();
                 wifiManager.setOnAPStartedHandler([this]() {
                     playIdleAnimation();
                 });
 
                 wifiManager.setOnWifiConnectedHandler([this]() {
                     wifiManager.end();
+                    lightWeaver->clearColorSource();
                 });
 
                 wifiManager.begin("Lightweaver-"+String(ESP.getChipId()));

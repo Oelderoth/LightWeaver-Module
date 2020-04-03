@@ -3,9 +3,7 @@
 #include <LightWeaver/ColorSource.h>
 #include <LightWeaver/Easing.h>
 
-namespace LightWeaverServer{
-    using namespace LightWeaver;
-
+namespace LightWeaver {
     class FadeColorSource : public ColorSource {
         private:
             RgbaColor start;

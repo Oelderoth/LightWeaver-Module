@@ -67,6 +67,7 @@ namespace LightWeaver {
         
         server.on("/saveWifi",HTTP_POST,[this](AsyncWebServerRequest *request) {
             if (request->hasParam("ssid", true) && request->hasParam("psk", true)) {
+                Serial.println("Connecting");
                 String ssid = request->getParam("ssid", true)->value();
                 String psk = request->getParam("psk", true)->value();
                 connectToWifi(ssid,psk);
@@ -101,6 +102,7 @@ namespace LightWeaver {
     
     void AsyncWifiManager::loop() {
         if (!hasFiredWifiCallbacks && WiFi.status() == WL_CONNECTED) {
+            Serial.println("Connected!");
             if (onWifiConnectedHandler) onWifiConnectedHandler();
             hasFiredWifiCallbacks = true;        
         }
