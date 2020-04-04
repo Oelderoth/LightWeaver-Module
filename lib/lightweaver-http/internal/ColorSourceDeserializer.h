@@ -51,8 +51,8 @@ namespace LightWeaver {
                         value(std::unique_ptr<ColorSource>{}),
                         error(error) {};
                 public:
-                    static Result withSuccess(const ColorSource& colorSource) {
-                        return Result(std::unique_ptr<ColorSource>{colorSource.clone()});
+                    static Result withSuccess(const std::unique_ptr<ColorSource>& colorSource) {
+                        return Result(std::unique_ptr<ColorSource>{colorSource->clone()});
                     }
 
                     static Result withError(const String error) {
@@ -81,10 +81,10 @@ namespace LightWeaver {
         static EasingFunction deserializeEasingFunctionFromName(const String& name);
 
         static Result deserialize(const JsonVariant& obj, const StringListBuilder& fieldName);
-        static ColorSource* deserializeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
-        static ColorSource* deserializeSolidColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
-        static ColorSource* deserializeFadeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
-        static ColorSource* deserializeOverlayColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static std::unique_ptr<ColorSource> deserializeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static std::unique_ptr<ColorSource> deserializeSolidColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static std::unique_ptr<ColorSource> deserializeFadeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static std::unique_ptr<ColorSource> deserializeOverlayColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         public:
         static Result deserialize(const JsonVariant& obj);
     };

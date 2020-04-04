@@ -5,7 +5,7 @@
  * This file makes liberal use of macros to encourage consistent validation and deserialize patterns
  * These can be used to shorthand common use cases for the Validation Functions defined below
  */
-#define Deserializer(type) ColorSource* ColorSourceDeserializer::deserialize##type(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields)
+#define Deserializer(type) std::unique_ptr<ColorSource> ColorSourceDeserializer::deserialize##type(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields)
 #define requiredField(field) validateRequiredField(field, fieldName + #field, missingFields)
 #define requiredFieldType(field,type) validateRequiredField(field, fieldName + #field, missingFields); validateFieldType<type>(field, fieldName + #field, invalidFields)
 #define optionalFieldType(field,type) if (!field.isNull()) validateFieldType<type>(field, fieldName + #field, invalidFields)
@@ -132,18 +132,17 @@ namespace LightWeaver {
     ColorSourceDeserializer::Result ColorSourceDeserializer::deserialize(const JsonVariant& obj) {
         StringListBuilder missingFields(", ","");
         StringListBuilder invalidFields(", ","");
-        ColorSource* colorSource = deserializeColorSource(obj, StringListBuilder(".",""), missingFields, invalidFields);
+        std::unique_ptr<ColorSource> colorSource = deserializeColorSource(obj, StringListBuilder(".",""), missingFields, invalidFields);
         enforceValidation();
         
         if (!colorSource) {
-            delete colorSource;
             return Result::withError("Unknown Error");
         }
 
-        return Result::withSuccess(*colorSource);
+        return Result::withSuccess(colorSource);
     }
 
-    ColorSource* ColorSourceDeserializer::deserializeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields) {
+    Deserializer(ColorSource) {
         if (!validateRequiredField(obj, fieldName, missingFields)
             || !validateRequiredField(obj["type"], fieldName + "type", missingFields)) {
             return nullptr;
@@ -169,7 +168,7 @@ namespace LightWeaver {
         requiredFieldType(uid, uint32_t);
         RgbaColor displayColor = deserializeAndValidate(color,deserializeColor);
 
-        return isValid() ? new SolidColorSource(uid,displayColor) : nullptr;
+        return isValid() ? std::unique_ptr<ColorSource>{new SolidColorSource(uid,displayColor)} : nullptr;
     }
 
     Deserializer(FadeColorSource) {
@@ -188,7 +187,9 @@ namespace LightWeaver {
         RgbaColor endColor = deserializeAndValidate(end, deserializeColor);
         EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
         
-        return isValid() ? new FadeColorSource(uid, startColor, endColor, duration, loop | false , easingFunction ? easingFunction : Easing::Linear) : nullptr;
+        return isValid() 
+            ? std::unique_ptr<ColorSource>{new FadeColorSource(uid, startColor, endColor, duration, loop | false , easingFunction ? easingFunction : Easing::Linear)} 
+            : nullptr;
     }
 
     Deserializer(OverlayColorSource) {
@@ -198,14 +199,12 @@ namespace LightWeaver {
 
         requiredFieldType(uid, uint32_t);
 
-        ColorSource* backgroundColorSource = deserializeAndValidate(background, deserializeColorSource);
-        ColorSource* overlayColorSource = deserializeAndValidate(overlay, deserializeColorSource);
+        std::unique_ptr<ColorSource> backgroundColorSource = deserializeAndValidate(background, deserializeColorSource);
+        std::unique_ptr<ColorSource> overlayColorSource = deserializeAndValidate(overlay, deserializeColorSource);
         
         if (isValid() && backgroundColorSource && overlayColorSource) {
-            return new OverlayColorSource(uid,*backgroundColorSource,*overlayColorSource);
+            return std::unique_ptr<ColorSource>{new OverlayColorSource(uid,*backgroundColorSource,*overlayColorSource)};
         } else {
-            delete backgroundColorSource;
-            delete overlayColorSource;
             return nullptr;
         }
     }
