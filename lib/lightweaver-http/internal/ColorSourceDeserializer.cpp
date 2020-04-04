@@ -1,3 +1,4 @@
+#include <string>
 #include "ColorSourceDeserializer.h"
 
 /**
@@ -42,17 +43,53 @@ namespace LightWeaver {
     RgbaColor ColorSourceDeserializer::deserializeColor(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields) {
         if (!validateRequiredField(obj, fieldName, missingFields)) return RgbaColor(0,0,0,0);
 
-        JsonVariant red = obj["red"];
-        JsonVariant green = obj["green"];
-        JsonVariant blue = obj["blue"];
-        JsonVariant alpha = obj["alpha"];
+        if (obj.is<String>()) {
+            String hexColor = obj.as<String>();
+            if (hexColor.charAt(0) != '#') {
+                invalidFields += fieldName;
+                return RgbaColor();
+            }
+            hexColor = hexColor.substring(1);
+            for (const char& c : hexColor) {
+                if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+                    invalidFields += fieldName;
+                    return RgbaColor();
+                }
+            }
+            
+            if (hexColor.length() == 6) {
+                uint8_t r = strtoul(hexColor.substring(0,2).c_str(),nullptr, 16);
+                uint8_t g = strtoul(hexColor.substring(2,4).c_str(),nullptr, 16);
+                uint8_t b = strtoul(hexColor.substring(4,6).c_str(),nullptr, 16);
+                return RgbColor(r,g,b);
+            } else if (hexColor.length() == 8) {
+                uint8_t r = strtoul(hexColor.substring(0,2).c_str(),nullptr, 16);
+                uint8_t g = strtoul(hexColor.substring(2,4).c_str(),nullptr, 16);
+                uint8_t b = strtoul(hexColor.substring(4,6).c_str(),nullptr, 16);
+                uint8_t a = strtoul(hexColor.substring(6,8).c_str(),nullptr, 16);
+                return RgbaColor(r,g,b,a);
+            }
+            
+            invalidFields += fieldName;
+            return RgbaColor();
+        }
 
-        requiredFieldType(red, uint8_t);
-        requiredFieldType(green, uint8_t);
-        requiredFieldType(blue, uint8_t);
-        optionalFieldType(alpha, uint8_t);
+        if (obj.is<JsonObject>()) {
+            JsonVariant red = obj["red"];
+            JsonVariant green = obj["green"];
+            JsonVariant blue = obj["blue"];
+            JsonVariant alpha = obj["alpha"];
 
-        return RgbaColor(red | 0, green | 0, blue | 0, alpha | 255);
+            requiredFieldType(red, uint8_t);
+            requiredFieldType(green, uint8_t);
+            requiredFieldType(blue, uint8_t);
+            optionalFieldType(alpha, uint8_t);
+
+            return RgbaColor(red | 0, green | 0, blue | 0, alpha | 255);
+        }
+
+        invalidFields += fieldName;
+        return RgbaColor();
     }
 
     EasingFunction ColorSourceDeserializer::deserializeEasingFunction(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields) {
@@ -73,24 +110,22 @@ namespace LightWeaver {
             if (name == "Mirror") {
                 JsonVariant child = obj["child"];
                 
-                requiredField(child);
                 EasingFunction function = deserializeAndValidate(child, deserializeEasingFunction);
 
                 if (function) {
                     return Easing::Mirror(function);
                 } else {
-                    return Easing::Linear;
+                    return Easing::Mirror(Easing::Linear);
                 }
             } else if (name == "Reverse") {
                 JsonVariant child = obj["child"];
                 
-                requiredField(child);
                 EasingFunction function = deserializeAndValidate(child, deserializeEasingFunction);
 
                 if (function) {
                     return Easing::Reverse(function);
                 } else {
-                    return Easing::Linear;
+                    return Easing::Reverse(Easing::Linear);
                 }
             } else {
                 return deserializeAndValidate(name, deserializeEasingFunction);
@@ -121,8 +156,75 @@ namespace LightWeaver {
         else if (name == "ExponentialIn") return Easing::ExponentialIn;
         else if (name == "ExponentialOut") return Easing::ExponentialOut;
         else if (name == "ExponentialInOut") return Easing::ExponentialInOut;
+        else if (name == "Mirror") return Easing::Mirror(Easing::Linear);
+        else if (name == "Reverse") return Easing::Reverse(Easing::Linear);
         return nullptr;
     }
+
+    ColorSet ColorSourceDeserializer::deserializeColorSet(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields) {
+        if (obj.isNull()) {
+            invalidFields += fieldName;
+            return ColorSet();
+        }
+
+        if (obj.is<JsonArray>()) {
+            JsonArray arr = obj.as<JsonArray>();
+            const uint8_t size = arr.size();
+            if (size == 0) {
+                invalidFields += fieldName;
+                return ColorSet();
+            }
+
+            RgbaColor* colors = new RgbaColor[size];
+
+            for (uint8_t i = 0; i < arr.size(); i++) {
+                JsonVariant color = arr.getElement(i);
+                colors[i] = deserializeColor(color, fieldName + String(i), missingFields, invalidFields);
+            }
+            
+            ColorSet colorSet{size, colors};
+
+            delete[] colors;
+
+            return colorSet;
+        }
+
+        invalidFields += fieldName;
+        return ColorSet();
+    }
+
+    GradientColorSource::Gradient ColorSourceDeserializer::deserializeGradient(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields) {
+        if (!validateRequiredField(obj, fieldName, missingFields) || !validateFieldType<JsonObject>(obj, fieldName, invalidFields)) return GradientColorSource::Gradient(ColorSet());
+
+        JsonVariant colors = obj["colors"];
+        JsonVariant easing = obj["easing"];
+
+        requiredField(colors);
+        EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
+        if (colors.is<JsonArray>()) {
+            // An array signifies that it is an evenly spaced color set w/ no positional data
+            ColorSet colorSet = deserializeAndValidate(colors, deserializeColorSet);
+            return GradientColorSource::Gradient{colorSet, easingFunction};
+        } else if (colors.is<JsonObject>()) {
+            // An object signifies that it is an color set w/ positional data
+            const uint8_t colorSize = colors.size();
+            std::unique_ptr<RgbaColor[]> colorList = std::unique_ptr<RgbaColor[]>{new RgbaColor[colorSize]};
+            std::unique_ptr<uint8_t[]> colorPositions = std::unique_ptr<uint8_t[]>{new uint8_t[colorSize]};
+            uint8_t i = 0;
+            for (JsonPair kv : colors.as<JsonObject>()) {
+                colorPositions[i] = String(kv.key().c_str()).toInt();
+                colorList[i] = deserializeColor(kv.value(), fieldName + String(kv.key().c_str()), missingFields, invalidFields);
+                i++;
+            }
+            auto gradient = GradientColorSource::Gradient{ColorSet{colorSize, colorList.get()}, colorPositions.get(), easingFunction};
+            return gradient;
+        } else {
+            invalidFields += fieldName + "colors";
+        }
+        
+        return GradientColorSource::Gradient(ColorSet());
+    }
+
 }
 
 /**
@@ -155,6 +257,8 @@ namespace LightWeaver {
             return deserializeFadeColorSource(obj, fieldName, missingFields, invalidFields);
         } else if (type == "Overlay") {
             return deserializeOverlayColorSource(obj, fieldName, missingFields, invalidFields);
+        } else if (type == "Gradient") {
+            return deserializeGradientColorSource(obj, fieldName, missingFields, invalidFields);
         } else {
             invalidFields += (fieldName + "type");
             return nullptr;
@@ -188,7 +292,7 @@ namespace LightWeaver {
         EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
         
         return isValid() 
-            ? std::unique_ptr<ColorSource>{new FadeColorSource(uid, startColor, endColor, duration, loop | false , easingFunction ? easingFunction : Easing::Linear)} 
+            ? std::unique_ptr<ColorSource>{new FadeColorSource(uid, startColor, endColor, duration, loop | false , easingFunction)} 
             : nullptr;
     }
 
@@ -207,5 +311,24 @@ namespace LightWeaver {
         } else {
             return nullptr;
         }
+    }
+
+    Deserializer(GradientColorSource) {
+        JsonVariant uid = obj["uid"];
+        JsonVariant duration = obj["duration"];
+        JsonVariant loop = obj["loop"];
+        JsonVariant gradient = obj["gradient"];
+        JsonVariant easing = obj["easing"];
+
+        requiredFieldType(uid, uint32_t);
+        requiredFieldType(duration, uint16_t);
+        optionalFieldType(loop, bool);
+        GradientColorSource::Gradient gradientData = deserializeAndValidate(gradient, deserializeGradient);
+        EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
+
+        return isValid() 
+            ? std::unique_ptr<ColorSource>{new GradientColorSource(uid, gradientData, duration, loop | false, easingFunction)} 
+            : nullptr;
+        return nullptr;
     }
 }

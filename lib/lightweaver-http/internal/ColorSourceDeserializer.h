@@ -6,6 +6,7 @@
 #include <LightWeaver/colorSources/SolidColorSource.h>
 #include <LightWeaver/colorSources/FadeColorSource.h>
 #include <LightWeaver/colorSources/OverlayColorSource.h>
+#include <LightWeaver/colorSources/GradientColorSource.h>
 
 namespace LightWeaver {
     class ColorSourceDeserializer {
@@ -79,12 +80,15 @@ namespace LightWeaver {
         static RgbaColor deserializeColor(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static EasingFunction deserializeEasingFunction(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static EasingFunction deserializeEasingFunctionFromName(const String& name);
+        static ColorSet deserializeColorSet(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static GradientColorSource::Gradient deserializeGradient(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields);
 
         static Result deserialize(const JsonVariant& obj, const StringListBuilder& fieldName);
         static std::unique_ptr<ColorSource> deserializeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static std::unique_ptr<ColorSource> deserializeSolidColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static std::unique_ptr<ColorSource> deserializeFadeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static std::unique_ptr<ColorSource> deserializeOverlayColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static std::unique_ptr<ColorSource> deserializeGradientColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         public:
         static Result deserialize(const JsonVariant& obj);
     };
