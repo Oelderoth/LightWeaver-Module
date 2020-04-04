@@ -41,19 +41,14 @@ namespace LightWeaver {
                 }));
 
                 server.addHandler(new AsyncCallbackJsonWebHandler("/setColorSource", [this](AsyncWebServerRequest *request, JsonVariant &json) {
-                    String err;
-                    auto colorSource = std::unique_ptr<ColorSource>{};
-
-                    colorSource = ColorSourceDeserializer::deserialize(json,err);
+                    ColorSourceDeserializer::Result result = ColorSourceDeserializer::deserialize(json);
                     
-                    if (!colorSource) {
-                        if (err.length()) {
-                            request->send(422,"text/json","{\"error\":\"" + err + "\"}");
-                        } else {
-                            request->send(500, "text/json", "{\"error\":\"Unknown error\"}");
-                        }
+                    if (!result) {
+                        request->send(422,"text/json","{\"error\":\"" + result.error + "\"}");
                     } else {
-                        lightWeaver->setColorSource(*colorSource.get());
+                        if (result.value) {
+                            lightWeaver->setColorSource(*(result.value));
+                        }
                         request->send(204);
                     }
                 }));
