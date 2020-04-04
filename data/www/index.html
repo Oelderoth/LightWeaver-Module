@@ -1,0 +1,26 @@
+<html>
+    <head>
+        <title>Esp Lightweaver Module</title>
+        <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+        <link rel="stylesheet" href="/style.css" />
+    </head>
+    <body>
+        <h1>LightWeaver Configuration</h1>
+        <p>This device is currently in "Configuration Mode". Please enter the credentials for your WiFi network and press "Save" below, and the device will attempt to connect to the network.</p>
+        
+        <form action="/saveWifi" method="POST">
+            <div class="field">
+                <label for="ssid">WiFi SSID</label>
+                <input type="text" name="ssid" placeholder="SSID..." value="%SSID%" /> <br/>
+            </div>
+            <div class="field">
+                <label for="psk">WiFi Password</label>
+                <input type="password" name="psk" placeholder="Password..." value="%PSK%" /> <br/>
+            </div>
+            <div class="buttons">
+                <a class="button" href="/device-info.html">Info</a>
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </body>
+</html>
