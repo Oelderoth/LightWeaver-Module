@@ -78,14 +78,34 @@ namespace LightWeaver {
             JsonVariant red = obj["red"];
             JsonVariant green = obj["green"];
             JsonVariant blue = obj["blue"];
+            JsonVariant hue = obj["hue"];
+            JsonVariant saturation = obj["saturation"];
+            JsonVariant value = obj["value"];
+            JsonVariant lightness = obj["lightness"];
             JsonVariant alpha = obj["alpha"];
 
-            requiredFieldType(red, uint8_t);
-            requiredFieldType(green, uint8_t);
-            requiredFieldType(blue, uint8_t);
-            optionalFieldType(alpha, uint8_t);
+            if (!red.isNull() || !green.isNull() || !blue.isNull()) {
+                requiredFieldType(red, uint8_t);
+                requiredFieldType(green, uint8_t);
+                requiredFieldType(blue, uint8_t);
+                optionalFieldType(alpha, uint8_t);
 
-            return RgbaColor(red | 0, green | 0, blue | 0, alpha | 255);
+                return RgbaColor(red | 0, green | 0, blue | 0, alpha | 255);
+            } else if (!lightness.isNull()) { // Only consider it HSL if lightness is present, otherwise assume HSV
+                requiredFieldType(hue, float);
+                requiredFieldType(saturation, float);
+                requiredFieldType(lightness, float);
+                optionalFieldType(alpha, uint8_t);
+
+                return HslaColor(hue | 0.0f, saturation | 0.0f, lightness | 0.0f, alpha | 255);
+            } else if (!value.isNull() || !hue.isNull() || !saturation.isNull()) { // Treat HSV as the default over HSL
+                requiredFieldType(hue, float);
+                requiredFieldType(saturation, float);
+                requiredFieldType(value, float);
+                optionalFieldType(alpha, uint8_t);
+
+                return HsvaColor(hue | 0.0f, saturation | 0.0f, value | 0.0f, alpha | 255);
+            }
         }
 
         invalidFields += fieldName;
@@ -108,9 +128,9 @@ namespace LightWeaver {
             requiredFieldType(name, String);
 
             if (name == "Mirror") {
-                JsonVariant child = obj["child"];
+                JsonVariant easing = obj["easing"];
                 
-                EasingFunction function = deserializeAndValidate(child, deserializeEasingFunction);
+                EasingFunction function = deserializeAndValidate(easing, deserializeEasingFunction);
 
                 if (function) {
                     return Easing::Mirror(function);
@@ -118,9 +138,9 @@ namespace LightWeaver {
                     return Easing::Mirror(Easing::Linear);
                 }
             } else if (name == "Reverse") {
-                JsonVariant child = obj["child"];
+                JsonVariant easing = obj["easing"];
                 
-                EasingFunction function = deserializeAndValidate(child, deserializeEasingFunction);
+                EasingFunction function = deserializeAndValidate(easing, deserializeEasingFunction);
 
                 if (function) {
                     return Easing::Reverse(function);

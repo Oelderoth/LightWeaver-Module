@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
+#define clamp(value, min, max) value < min ? min : value > max ? max : value
+
 namespace LightWeaver {
     struct RgbColor;
     struct RgbaColor;
@@ -37,7 +39,7 @@ namespace LightWeaver {
     };
 
     struct HsvaColor {
-        HsvaColor(float h, float s, float v, uint8_t a = 255): H(h), S(s), V(v), A(a) {};
+        HsvaColor(float h, float s, float v, uint8_t a = 255): H(fmod(h, 360)), S(clamp(s,0,1)), V(clamp(v,0,1)), A(a) {};
         HsvaColor(): HsvaColor(0,0,0) {};
         HsvaColor(const RgbColor& rgb);
         HsvaColor(const RgbaColor& rgb);
@@ -50,7 +52,7 @@ namespace LightWeaver {
     };
 
     struct HslaColor {
-        HslaColor(float h, float s, float l, uint8_t a = 255): H(h), S(s), L(l), A(a) {};
+        HslaColor(float h, float s, float l, uint8_t a = 255): H(fmod(h,360)), S(clamp(s,0,1)), L(clamp(l,0,1)), A(a) {};
         HslaColor(): HslaColor(0,0,0) {};
         HslaColor(const RgbColor& rgb);
         HslaColor(const RgbaColor& rgb);

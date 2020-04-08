@@ -4,8 +4,6 @@
 #include <LightWeaverHttpServer.h>
 #include <LightWeaver/drivers/NeoDriverSK6812.h>
 
-#include <LightWeaver/colorSources/GradientColorSource.h>
-
 using namespace LightWeaver;
 
 #define PIXEL_COUNT 6
