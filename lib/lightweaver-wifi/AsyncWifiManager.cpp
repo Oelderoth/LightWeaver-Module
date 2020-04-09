@@ -47,7 +47,9 @@ namespace LightWeaver {
 
     void AsyncWifiManager::begin(String softApName) {
         connectToWifi();
-        if (isConnectedToWifi()) return;
+        if (isConnectedToWifi()) {
+            return;
+        }
 
         SPIFFS.begin();
         WiFi.softAPConfig(apIP, apIP, netMsk);
@@ -102,7 +104,6 @@ namespace LightWeaver {
     
     void AsyncWifiManager::loop() {
         if (!hasFiredWifiCallbacks && WiFi.status() == WL_CONNECTED) {
-            Serial.println("Connected!");
             if (onWifiConnectedHandler) onWifiConnectedHandler();
             hasFiredWifiCallbacks = true;        
         }

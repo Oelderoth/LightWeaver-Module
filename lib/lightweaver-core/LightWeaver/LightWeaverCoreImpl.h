@@ -104,6 +104,15 @@ namespace LightWeaver {
             return true;
         }
 
+        const LightWeaverPlugin* getPluginOfType(const String& type) {
+            for (uint8_t i = 0; i < MAXIMUM_PLUGINS; i++) {
+                if (plugins[i] && plugins[i]->getType() == type) {
+                    return plugins[i];
+                }
+            }
+            return nullptr;
+        }
+
         void setup()
         {
             for (uint8_t i = 0; i < MAXIMUM_PLUGINS; i++) {
@@ -167,6 +176,10 @@ namespace LightWeaver {
             backgroundColorSource = cs.clone();
             const Animation* anim = backgroundColorSource->getAnimation();
             animator.playAnimation(BACKGROUND_ANIMATION, anim);
+        }
+
+        virtual int getSupportedFeatures() {
+            return T_DRIVER::SupportedFeatures;
         }
     };
 };

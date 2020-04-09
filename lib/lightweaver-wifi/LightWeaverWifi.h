@@ -18,6 +18,8 @@ namespace LightWeaver {
                     5000, true, Easing::Mirror(Easing::QuadraticInOut)});
             }
         public:
+            static const String type;
+
             LightWeaverWifi(LightWeaverCore& lightWeaver):
                 LightWeaverPlugin(lightWeaver) {};
             virtual ~LightWeaverWifi() {
@@ -39,5 +41,11 @@ namespace LightWeaver {
             virtual void loop() {
                 wifiManager.loop();
             }
+
+            virtual const String& getType() {
+                return LightWeaverWifi::type;
+            }
     };
+
+    const String LightWeaverWifi::type = "WIFI";
 }

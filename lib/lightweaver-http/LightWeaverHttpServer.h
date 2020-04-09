@@ -7,12 +7,17 @@
 #include <ESPAsyncWebServer.h>
 
 #include <LightWeaver/colorSources/SolidColorSource.h>
-#include <LightWeaver/LightWeaverPlugin.h>
+#include <LightWeaver/LightWeaverWebPlugin.h>
 
 #include "internal/ColorSourceDeserializer.h"
 
 namespace LightWeaver {
-    class LightWeaverHttpServer : public LightWeaverPlugin {
+    class LightWeaverHttpServer : public LightWeaverWebPlugin {
+        public:
+            static const String type;
+            static const String apiVersion;
+            static const String rootPath;
+            static const uint16_t port = 80;
         private:
             AsyncWebServer server{80};
             bool isServerStarted = false;
@@ -21,26 +26,18 @@ namespace LightWeaver {
                 isServerStarted = true;
             }
         public:
-            LightWeaverHttpServer(LightWeaverCore& lightWeaver): LightWeaverPlugin(lightWeaver) {
+            LightWeaverHttpServer(LightWeaverCore& lightWeaver): LightWeaverWebPlugin(lightWeaver) {
             }
             virtual ~LightWeaverHttpServer() {
                 server.end();
             }
             
             virtual void setup() {
-                server.on("/lightWeaver/alive",HTTP_GET,[](AsyncWebServerRequest *request) {
+                server.on((rootPath + "/alive").c_str(),HTTP_GET,[](AsyncWebServerRequest *request) {
                     request->send(200,"text/html","OK");
                 });
 
-                server.addHandler(new AsyncCallbackJsonWebHandler("/setColor", [this](AsyncWebServerRequest *request, JsonVariant &json) {
-                    uint8_t red = json.getMember("red").as<uint8_t>();
-                    uint8_t green = json.getMember("green").as<uint8_t>();
-                    uint8_t blue = json.getMember("blue").as<uint8_t>();
-                    lightWeaver->setColorSource(SolidColorSource(0x00000000,RgbColor(red, green, blue)));
-                    request->send(204);
-                }));
-
-                server.addHandler(new AsyncCallbackJsonWebHandler("/setColorSource", [this](AsyncWebServerRequest *request, JsonVariant &json) {
+                server.addHandler(new AsyncCallbackJsonWebHandler((rootPath + "/setColorSource").c_str(), [this](AsyncWebServerRequest *request, JsonVariant &json) {
                     ColorSourceDeserializer::Result result = ColorSourceDeserializer::deserialize(json);
                     
                     if (!result) {
@@ -53,16 +50,29 @@ namespace LightWeaver {
                     }
                 }));
 
-                server.on("/clearColorSource",[this](AsyncWebServerRequest* request) {
+                server.on((rootPath + "/clearColorSource").c_str(), [this](AsyncWebServerRequest* request) {
                     lightWeaver->clearColorSource();
                     request->send(204);
                 });
+
+                server.onNotFound([](AsyncWebServerRequest* request) {
+                    request->send(404);
+                });
+
+
+                LightWeaverWebPlugin::setup();
             }
 
-            virtual void loop() {
-                if (!isServerStarted && WiFi.status() == WL_CONNECTED) {
-                    startServer();
-                }
+            virtual void onWifiConnected() {
+                startServer();
+            }
+
+            virtual const String& getType() {
+                return LightWeaverHttpServer::type;
             }
     };
+
+    const String LightWeaverHttpServer::type = "HTTP_SERVER";
+    const String LightWeaverHttpServer::apiVersion = "0.1.0";
+    const String LightWeaverHttpServer::rootPath = "/lightWeaver";
 }
