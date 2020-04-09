@@ -15,5 +15,7 @@ namespace LightWeaver {
         virtual ~LightWeaverPlugin() {};
         virtual void setup() {};
         virtual void loop() {};
+
+        virtual const String& getType() = 0;
     };
 }

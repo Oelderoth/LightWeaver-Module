@@ -1,7 +1,7 @@
 #include <NeoPixelBrightnessBus.h>
 
+#include "Driver.h"
 #include "../Color.h"
-
 #include "../Features.h"
 
 namespace LightWeaver {
@@ -9,7 +9,7 @@ namespace LightWeaver {
      * Driver class for controlling a strip of RGBW SK6182 LEDs using NeoPixelBus
      */
     template <int GROUP_SIZE>
-    class NeoDriverSK6812_RGBW
+    class NeoDriverSK6812_RGBW : Driver
     {
     private:
         NeoPixelBrightnessBus<NeoGrbwFeature, NeoEsp8266Dma800KbpsMethod> strip;
@@ -31,13 +31,5 @@ namespace LightWeaver {
         void loop(){
             strip.Show();
         };
-    };
-
-    class NoopDriver {
-        public:
-        static const int SupportedFeatures = 0;
-        NoopDriver(uint16_t pixelCount) {};
-        void setup(){};
-        void loop(){}
     };
 }
