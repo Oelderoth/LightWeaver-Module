@@ -7,7 +7,7 @@
 
 using namespace LightWeaver;
 
-#define PIXEL_COUNT 6
+#define PIXEL_COUNT 30
 #define PIXEL_GROUP_SIZE 1
 #define MAX_PLUGINS 4
 #define DRIVER NeoRgbDriver<NeoGrbFeature, NeoEsp8266Dma800KbpsMethod>

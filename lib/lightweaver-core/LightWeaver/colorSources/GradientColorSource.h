@@ -74,7 +74,7 @@ namespace LightWeaver {
                     uint8_t beforeIndex = getColorIndexBeforePosition(effectivePosition);
                     uint8_t afterIndex = beforeIndex == colorSet.size - 1 ? beforeIndex : beforeIndex + 1;
                     float partialProgress = easing(getPartialProgress(progress, beforeIndex, afterIndex));
-                    RgbColor color = RgbaColor::linearBlend(colorSet.colors[beforeIndex], colorSet.colors[afterIndex], partialProgress);
+                    RgbaColor color = RgbaColor::linearBlend(colorSet.colors[beforeIndex], colorSet.colors[afterIndex], partialProgress);
                    
                     return color;
                 }

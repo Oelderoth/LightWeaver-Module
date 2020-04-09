@@ -40,7 +40,7 @@ namespace LightWeaver {
 
             void beginHueTransition() {
                 float startValue = hueTransition.end;
-                float endValue = fmod(random(-maxDistance,maxDistance) + color.H, 360);
+                float endValue = random(-maxDistance,maxDistance) + color.H;
                 float diff = fabs(startValue - endValue) / (2*maxDistance);
                 uint16_t duration = diff * maxDuration;
                 hueTransition = Transition<float>(startValue,endValue);
@@ -62,7 +62,7 @@ namespace LightWeaver {
             
             virtual RgbaColor getColor() const {
                 float h = (hueTransition.end - hueTransition.start) * hueTransition.progress + hueTransition.start;
-                return HsvaColor(h, color.S, color.V);;
+                return HsvaColor(h, color.S, color.V);
             }
 
             virtual ColorSource* clone() const {

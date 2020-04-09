@@ -279,6 +279,8 @@ namespace LightWeaver {
             return deserializeOverlayColorSource(obj, fieldName, missingFields, invalidFields);
         } else if (type == "Gradient") {
             return deserializeGradientColorSource(obj, fieldName, missingFields, invalidFields);
+        } else if (type == "HueMeander") {
+            return deserializeHueMeanderColorSource(obj, fieldName, missingFields, invalidFields);
         } else {
             invalidFields += (fieldName + "type");
             return nullptr;
@@ -348,6 +350,25 @@ namespace LightWeaver {
 
         return isValid() 
             ? std::unique_ptr<ColorSource>{new GradientColorSource(uid, gradientData, duration, loop | false, easingFunction)} 
+            : nullptr;
+        return nullptr;
+    }
+
+    Deserializer(HueMeanderColorSource) {
+        JsonVariant uid = obj["uid"];
+        JsonVariant color = obj["color"];
+        JsonVariant maxDistance = obj["maxDistance"];
+        JsonVariant maxDuration = obj["maxDuration"];
+        JsonVariant easing = obj["easing"];
+
+        requiredFieldType(uid, uint32_t);
+        requiredFieldType(maxDistance, float);
+        requiredFieldType(maxDuration, uint16_t);
+        RgbaColor baseColor = deserializeAndValidate(color, deserializeColor);
+        EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
+
+        return isValid() 
+            ? std::unique_ptr<ColorSource>{new HueMeanderColorSource(uid, baseColor, maxDistance, maxDuration, easingFunction)} 
             : nullptr;
         return nullptr;
     }

@@ -7,6 +7,7 @@
 #include <LightWeaver/colorSources/FadeColorSource.h>
 #include <LightWeaver/colorSources/OverlayColorSource.h>
 #include <LightWeaver/colorSources/GradientColorSource.h>
+#include <LightWeaver/colorSources/HueMeanderColorSource.h>
 #include <LightWeaver/util/StringListBuilder.h>
 
 namespace LightWeaver {
@@ -64,6 +65,7 @@ namespace LightWeaver {
         static std::unique_ptr<ColorSource> deserializeFadeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static std::unique_ptr<ColorSource> deserializeOverlayColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static std::unique_ptr<ColorSource> deserializeGradientColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static std::unique_ptr<ColorSource> deserializeHueMeanderColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         public:
         static Result deserialize(const JsonVariant& obj);
     };
