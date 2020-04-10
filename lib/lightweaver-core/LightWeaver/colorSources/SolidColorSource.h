@@ -5,7 +5,7 @@
 namespace LightWeaver {
     class SolidColorSource : public ColorSource {
         private:
-            RgbaColor color;
+            HslaColor color;
         public:
             SolidColorSource(uint32_t uid, RgbaColor color) : 
                 ColorSource(uid),

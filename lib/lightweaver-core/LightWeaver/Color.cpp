@@ -18,33 +18,33 @@ namespace LightWeaver {
     RgbColor::RgbColor(const HslaColor& hsla): RgbColor(RgbaColor(hsla)) {};
     // HSVA <=> RGBA
     RgbaColor::RgbaColor(const HsvaColor& hsva) {
-        float h = fmod(hsva.H,360.f);
+        float h = hsva.H < 0 ? fmod(hsva.H,360.f) + 360 : fmod(hsva.H, 360.f);
         float c = hsva.V * hsva.S;
         float x = c * (1 - fabs(fmod(h/60,2)-1));
         float m = hsva.V - c;
         if (h >= 0 && h < 60) {
             R = (c + m) * 255;
             G = (x + m) * 255;
-            B = 0;
+            B = m * 255;
         } else if (h >= 60 && h < 120) {
             R = (x + m) * 255;
             G = (c + m) * 255;
-            B = 0;
+            B = m * 255;
         } else if (h >= 120 && h < 180) {
-            R = 0;
+            R = m * 255;
             G = (c + m) * 255;
             B = (x + m) * 255;
         } else if (h >= 180 && h < 240) {
-            R = 0;
+            R = m * 255;
             G = (x + m) * 255;
             B = (c + m) * 255;
         } else if (h >= 240 && h < 300) {
             R = (x + m) * 255;
-            G = 0;
+            G = m * 255;
             B = (c + m) * 255;
         } else {
             R = (c + m) * 255;
-            G = 0;
+            G = m * 255;
             B = (x + m) * 255;
         };
         A = hsva.A;
@@ -65,6 +65,7 @@ namespace LightWeaver {
         } else if (cMax == b) {
             H = 60.0 * ((r - g)/delta + 4);
         }
+        H = H < 0 ? fmod(H,360.f) + 360 : fmod(H, 360.f);
 
         if (cMax == 0) {
             S = 0;
@@ -79,7 +80,7 @@ namespace LightWeaver {
     HsvaColor::HsvaColor(const HslaColor& hsla): HsvaColor(RgbaColor(hsla)) {};
     // HSLA <=> RGBA
     RgbaColor::RgbaColor(const HslaColor& hsla) {
-        float h = fmod(hsla.H,360.f);
+        float h = hsla.H < 0 ? fmod(hsla.H,360.f) + 360 : fmod(hsla.H, 360.f);
         float C = (1 - fabs(2 * hsla.L - 1)) * hsla.S;
         float H = h / 60;
         float X = C * (1 - fabs(fmod(H,2) - 1));
@@ -126,6 +127,7 @@ namespace LightWeaver {
         } else if (cMax == b) {
             H = 60.0 * ((r - g)/delta + 4);
         }
+        H = H < 0 ? fmod(H,360.f) + 360 : fmod(H, 360.f);
 
         L = (cMax + cMin) / 2;
 
