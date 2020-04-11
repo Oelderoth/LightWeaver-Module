@@ -11,6 +11,8 @@
 
 #include "internal/ColorSourceDeserializer.h"
 
+#define JSON_DOC_SIZE 2048U
+
 namespace LightWeaver {
     class LightWeaverHttpServer : public LightWeaverWebPlugin {
         public:
@@ -48,7 +50,7 @@ namespace LightWeaver {
                         }
                         request->send(204);
                     }
-                }));
+                }, JSON_DOC_SIZE));
 
                 server.on((rootPath + "/clearColorSource").c_str(), [this](AsyncWebServerRequest* request) {
                     lightWeaver->clearColorSource();
@@ -65,7 +67,7 @@ namespace LightWeaver {
                         lightWeaver->setBrightness(brightness);
                         request->send(204);
                     }
-                }));
+                }, JSON_DOC_SIZE));
 
                 
 
