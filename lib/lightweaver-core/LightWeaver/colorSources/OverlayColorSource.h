@@ -47,6 +47,15 @@ namespace LightWeaver {
                 return LightWeaver::RgbColor(R > 255 ? 255 : R, G > 255 ? 255 : G, B > 255 ? 255 : B);
             }
 
+            virtual RgbaColor getColor(uint8_t index, uint8_t count) {
+                LightWeaver::RgbColor backgroundColor = backgroundColorSource->getColor(index, count);
+                LightWeaver::RgbaColor overlayColor = overlayColorSource->getColor(index, count);
+                uint16_t R = backgroundColor.R + (float)(overlayColor.A)/255.0f * overlayColor.R;
+                uint16_t G = backgroundColor.G + (float)(overlayColor.A)/255.0f * overlayColor.G;
+                uint16_t B = backgroundColor.B + (float)(overlayColor.A)/255.0f * overlayColor.B;
+                return LightWeaver::RgbColor(R > 255 ? 255 : R, G > 255 ? 255 : G, B > 255 ? 255 : B);
+            }
+
             virtual ColorSource* clone() const {
                 return new OverlayColorSource(uid, *backgroundColorSource, *overlayColorSource);
             }
