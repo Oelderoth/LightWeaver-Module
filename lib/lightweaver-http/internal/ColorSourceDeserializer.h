@@ -54,10 +54,11 @@ namespace LightWeaver {
         template<typename T> static bool validateFieldType(const JsonVariant& field, const String& fieldName, StringListBuilder& err);
 
         static RgbaColor deserializeColor(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
-        static EasingFunction deserializeEasingFunction(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static EasingFunction deserializeEasingFunction(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static EasingFunction deserializeEasingFunctionFromName(const String& name);
-        static ColorSet deserializeColorSet(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields);
-        static GradientColorSource::Gradient deserializeGradient(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static ColorSet deserializeColorSet(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static GradientColorSource::Gradient deserializeGradient(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
+        static PixelOffsetConfig deserializePixelOffsetConfig(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
 
         static Result deserialize(const JsonVariant& obj, const StringListBuilder& fieldName);
         static std::unique_ptr<ColorSource> deserializeColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);

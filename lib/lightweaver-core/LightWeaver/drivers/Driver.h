@@ -12,6 +12,9 @@ namespace LightWeaver {
         public:
         virtual void setup() = 0;
         virtual void setColor(RgbColor color) = 0;
+        virtual void setColor(RgbColor color, uint8_t index, uint8_t length = 1) {
+            setColor(color);
+        }
         virtual void setBrightness(uint8_t brightness)  = 0;
         virtual void loop() = 0;
     };
