@@ -1,4 +1,9 @@
 #include <string>
+#include <LightWeaver/colorSources/SolidColorSource.h>
+#include <LightWeaver/colorSources/FadeColorSource.h>
+#include <LightWeaver/colorSources/OverlayColorSource.h>
+#include <LightWeaver/colorSources/GradientColorSource.h>
+#include <LightWeaver/colorSources/HsvMeanderColorSource.h>
 #include "ColorSourceDeserializer.h"
 
 /**
@@ -213,8 +218,8 @@ namespace LightWeaver {
         return ColorSet();
     }
 
-    GradientColorSource::Gradient ColorSourceDeserializer::deserializeGradient(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields) {
-        if (!validateRequiredField(obj, fieldName, missingFields) || !validateFieldType<JsonObject>(obj, fieldName, invalidFields)) return GradientColorSource::Gradient(ColorSet());
+    Gradient ColorSourceDeserializer::deserializeGradient(const JsonVariant& obj, const StringListBuilder& fieldName,  StringListBuilder& missingFields, StringListBuilder& invalidFields) {
+        if (!validateRequiredField(obj, fieldName, missingFields) || !validateFieldType<JsonObject>(obj, fieldName, invalidFields)) return Gradient(ColorSet());
 
         JsonVariant colors = obj["colors"];
         JsonVariant easing = obj["easing"];
@@ -224,7 +229,7 @@ namespace LightWeaver {
         if (colors.is<JsonArray>()) {
             // An array signifies that it is an evenly spaced color set w/ no positional data
             ColorSet colorSet = deserializeAndValidate(colors, deserializeColorSet);
-            return GradientColorSource::Gradient{colorSet, easingFunction};
+            return Gradient{colorSet, easingFunction};
         } else if (colors.is<JsonObject>()) {
             // An object signifies that it is an color set w/ positional data
             const uint8_t colorSize = colors.size();
@@ -236,17 +241,17 @@ namespace LightWeaver {
                 colorList[i] = deserializeColor(kv.value(), fieldName + String(kv.key().c_str()), missingFields, invalidFields);
                 i++;
             }
-            auto gradient = GradientColorSource::Gradient{ColorSet{colorSize, colorList.get()}, colorPositions.get(), easingFunction};
+            auto gradient = Gradient{ColorSet{colorSize, colorList.get()}, colorPositions.get(), easingFunction};
             return gradient;
         } else {
             invalidFields += fieldName + "colors";
         }
         
-        return GradientColorSource::Gradient(ColorSet());
+        return Gradient(ColorSet());
     }
 
     PixelOffsetConfig ColorSourceDeserializer::deserializePixelOffsetConfig(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields) {
-        if (obj.isNull()) return PixelOffsetConfig();
+        if (obj.isNull()) return PixelOffsetConfig::withNone();
 
         JsonVariant type = obj["type"];
         requiredFieldType(type, String);
@@ -254,7 +259,7 @@ namespace LightWeaver {
         if (type == "Scale") {
             JsonVariant scale = obj["scale"];
             requiredFieldType(scale, float);
-            return PixelOffsetConfig(scale | 0.0f); 
+            return PixelOffsetConfig::withScale(scale | 0.0f); 
         } else if (type == "OffsetList") {
             JsonVariant offsets = obj["offsets"];
             requiredFieldType(offsets, JsonArray);
@@ -269,19 +274,21 @@ namespace LightWeaver {
 
                     offsetList[i] = offset | 0.0f;
                 }
-                PixelOffsetConfig config{size, offsetList};
+                PixelOffsetConfig config = PixelOffsetConfig::withList(size, offsetList);
                 delete[] offsetList;
                 return config;
             }
 
-            return PixelOffsetConfig();
+            invalidFields += fieldName + "offsets";
+
+            return PixelOffsetConfig::withNone();
         } else if (type == "Random") {
             // TODO: Support this
-            return PixelOffsetConfig();
+            return PixelOffsetConfig::withRandom();
         }
         
         invalidFields += fieldName;
-        return PixelOffsetConfig();
+        return PixelOffsetConfig::withNone();
     }
 
 }
@@ -318,8 +325,8 @@ namespace LightWeaver {
             return deserializeOverlayColorSource(obj, fieldName, missingFields, invalidFields);
         } else if (type == "Gradient") {
             return deserializeGradientColorSource(obj, fieldName, missingFields, invalidFields);
-        } else if (type == "HueMeander") {
-            return deserializeHueMeanderColorSource(obj, fieldName, missingFields, invalidFields);
+        } else if (type == "HsvMeander") {
+            return deserializeHsvMeanderColorSource(obj, fieldName, missingFields, invalidFields);
         } else {
             invalidFields += (fieldName + "type");
             return nullptr;
@@ -385,7 +392,7 @@ namespace LightWeaver {
         requiredFieldType(uid, uint32_t);
         requiredFieldType(duration, uint16_t);
         optionalFieldType(loop, bool);
-        GradientColorSource::Gradient gradientData = deserializeAndValidate(gradient, deserializeGradient);
+        Gradient gradientData = deserializeAndValidate(gradient, deserializeGradient);
         EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
         PixelOffsetConfig pixelOffsetConfig = deserializeAndValidate(pixelOffsets, deserializePixelOffsetConfig);
 
@@ -395,21 +402,25 @@ namespace LightWeaver {
         return nullptr;
     }
 
-    Deserializer(HueMeanderColorSource) {
+    Deserializer(HsvMeanderColorSource) {
         JsonVariant uid = obj["uid"];
         JsonVariant color = obj["color"];
-        JsonVariant maxDistance = obj["maxDistance"];
-        JsonVariant maxDuration = obj["maxDuration"];
-        JsonVariant easing = obj["easing"];
+        JsonVariant duration = obj["duration"];
+        JsonVariant hueDistance = obj["hueDistance"];
+        JsonVariant saturationDistance = obj["saturationDistance"];
+        JsonVariant valueDistance = obj["valueDistance"];
+        JsonVariant pixelOffsets = obj["pixelOffsets"];
 
         requiredFieldType(uid, uint32_t);
-        requiredFieldType(maxDistance, float);
-        requiredFieldType(maxDuration, uint16_t);
+        requiredFieldType(duration, uint16_t);
+        optionalFieldType(hueDistance, float);
+        optionalFieldType(saturationDistance, float);
+        optionalFieldType(valueDistance, float);
         RgbaColor baseColor = deserializeAndValidate(color, deserializeColor);
-        EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
+        PixelOffsetConfig pixelOffsetConfig = deserializeAndValidate(pixelOffsets, deserializePixelOffsetConfig);
 
         return isValid() 
-            ? std::unique_ptr<ColorSource>{new HueMeanderColorSource(uid, baseColor, maxDistance, maxDuration, easingFunction)} 
+            ? std::unique_ptr<ColorSource>{new HsvMeanderColorSource(uid, baseColor, duration, hueDistance | 0.0f, saturationDistance | 0.0f, valueDistance | 0.0f, pixelOffsetConfig)} 
             : nullptr;
         return nullptr;
     }
