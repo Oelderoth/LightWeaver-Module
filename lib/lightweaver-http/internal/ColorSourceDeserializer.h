@@ -50,8 +50,6 @@ namespace LightWeaver {
             };
 
         private:
-        static bool validateRequiredField(const JsonVariant& field, const String& fieldName, StringListBuilder& err);
-        template<typename T> static bool validateFieldType(const JsonVariant& field, const String& fieldName, StringListBuilder& err);
 
         static RgbaColor deserializeColor(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         static EasingFunction deserializeEasingFunction(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
@@ -69,5 +67,7 @@ namespace LightWeaver {
         static std::unique_ptr<ColorSource> deserializeHueMeanderColorSource(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields);
         public:
         static Result deserialize(const JsonVariant& obj);
+        static bool validateRequiredField(const JsonVariant& field, const String& fieldName, StringListBuilder& err);
+        template<typename T> static bool validateFieldType(const JsonVariant& field, const String& fieldName, StringListBuilder& err);
     };
 }

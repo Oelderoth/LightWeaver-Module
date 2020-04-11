@@ -55,6 +55,20 @@ namespace LightWeaver {
                     request->send(204);
                 });
 
+                 server.addHandler(new AsyncCallbackJsonWebHandler((rootPath + "/setBrightness").c_str(), [this](AsyncWebServerRequest *request, JsonVariant &json) {
+                    JsonVariant brightness = json["brightness"];
+                    if (brightness.isNull()) {
+                        request->send(422,"text/json","{\"error\":\"Required fields missing: brightness\"}");
+                    } if (!brightness.is<uint8_t>()) {
+                        request->send(422,"text/json","{\"error\":\"Invalid value for fields: brightness\"}");
+                    } else {
+                        lightWeaver->setBrightness(brightness);
+                        request->send(204);
+                    }
+                }));
+
+                
+
                 server.onNotFound([](AsyncWebServerRequest* request) {
                     request->send(404);
                 });
