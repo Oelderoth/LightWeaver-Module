@@ -18,8 +18,14 @@ namespace LightWeaver {
         static const int SupportedFeatures = SupportedFeature::BRIGHTNESS | SupportedFeature::COLOR | SupportedFeature::ANIMATION | SupportedFeature::ADDRESSABLE;
         NeoRgbDriver(uint16_t pixelCount) : strip(NeoPixelBrightnessBus<T_FEATURE, T_METHOD>(pixelCount)), pixelCount(pixelCount) {};
         void setColor(RgbColor color) {
-            for (int i = 0; i < pixelCount; i++) {
-                strip.SetPixelColor(i, ::RgbColor(color.R, color.G, color.B));
+            strip.ClearTo(::RgbColor(color.R, color.G, color.B));
+        };
+        void setColor(RgbColor color, uint8_t index, uint8_t length) {
+            ::RgbColor rgb = ::RgbColor(color.R, color.G, color.B);
+            if (length == 1) {
+                strip.SetPixelColor(index, rgb);
+            } else {
+                strip.ClearTo(rgb, index, index + length - 1);
             }
         };
         void setBrightness(uint8_t brightness) {

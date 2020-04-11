@@ -3,6 +3,7 @@
 #include <LightWeaver/ColorSource.h>
 #include <LightWeaver/Easing.h>
 #include <LightWeaver/ColorSet.h>
+#include <LightWeaver/PixelOffsetConfig.h>
 
 namespace LightWeaver {
 
@@ -61,7 +62,9 @@ namespace LightWeaver {
                     if (colorSet.size == 0) return RgbColor();
                     if (colorSet.size == 1) return colorSet.colors[0];
 
-                    uint8_t effectivePosition = (uint8_t)(progress * 255);
+                    float easedProgress = easing(progress);
+
+                    uint8_t effectivePosition = (uint8_t)(easedProgress * 255);
                     // Assume that any space before the first color is part of the first color
                     // and any space after the last color is part of the last color
                     // TODO: Allow optionally blending between last and first color
@@ -73,7 +76,7 @@ namespace LightWeaver {
 
                     uint8_t beforeIndex = getColorIndexBeforePosition(effectivePosition);
                     uint8_t afterIndex = beforeIndex == colorSet.size - 1 ? beforeIndex : beforeIndex + 1;
-                    float partialProgress = easing(getPartialProgress(progress, beforeIndex, afterIndex));
+                    float partialProgress = easing(getPartialProgress(easedProgress, beforeIndex, afterIndex));
                     RgbaColor color = RgbaColor::linearBlend(colorSet.colors[beforeIndex], colorSet.colors[afterIndex], partialProgress);
                    
                     return color;
@@ -85,6 +88,8 @@ namespace LightWeaver {
             bool loop;
             const Gradient colors;
             EasingFunction easing;
+
+            const PixelOffsetConfig offsets;
             
             float progress;
             const Animation animation;
@@ -94,21 +99,28 @@ namespace LightWeaver {
             }
         public:
 
-            GradientColorSource(uint32_t uid, const Gradient& colors, uint16_t duration, bool loop, EasingFunction easing = Easing::Linear) : 
+            GradientColorSource(uint32_t uid, const Gradient& colors, uint16_t duration, bool loop, EasingFunction easing = Easing::Linear, PixelOffsetConfig offsets = PixelOffsetConfig()) : 
                 ColorSource(uid),
                 duration(duration),
                 loop(loop),
                 colors(colors),
                 easing(easing),
+                offsets(offsets),
                 progress(0.0f),
-                animation(Animation(duration, loop, std::bind(&GradientColorSource::onAnimationTick, this, std::placeholders::_1), easing)) {}
+                animation(Animation(duration, loop, std::bind(&GradientColorSource::onAnimationTick, this, std::placeholders::_1), Easing::Linear)) {}
 
             virtual RgbaColor getColor() const {
                 return colors.getColor(progress);
             }
 
+            virtual RgbaColor getColor(uint8_t index, uint8_t count) const {
+                float offset = offsets.getOffset(index, count);
+                float offsetProgress = fmod(progress + offset, 1.0) + (offset < 0 ? 1 : 0);
+                return colors.getColor(offsetProgress);
+            }
+
             virtual ColorSource* clone() const {
-                return new GradientColorSource(uid, colors, duration, loop, easing);
+                return new GradientColorSource(uid, colors, duration, loop, easing, offsets);
             }
 
             virtual const Animation* getAnimation() const {

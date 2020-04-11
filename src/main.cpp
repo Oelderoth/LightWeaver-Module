@@ -7,13 +7,13 @@
 
 using namespace LightWeaver;
 
-#define PIXEL_COUNT 30
+#define PIXEL_COUNT 12
 #define PIXEL_GROUP_SIZE 1
 #define MAX_PLUGINS 4
 #define DRIVER NeoRgbDriver<NeoGrbFeature, NeoEsp8266Dma800KbpsMethod>
 
 // LightWeaverCoreImpl<NeoDriverSK6812_RGBW<PIXEL_GROUP_SIZE>,MAX_PLUGINS> lightWeaver(PIXEL_COUNT, 255);
-LightWeaverCoreImpl<DRIVER,MAX_PLUGINS> lightWeaver(PIXEL_COUNT, 255);
+LightWeaverCoreImpl<DRIVER,MAX_PLUGINS> lightWeaver(PIXEL_COUNT, PIXEL_GROUP_SIZE, 255);
 // LightWeaverCoreImpl<NoopDriver,MAX_PLUGINS> lightWeaver(PIXEL_COUNT, 255);
 
 void setup()
@@ -25,7 +25,7 @@ void setup()
     lightWeaver.addPlugin<LightWeaverHttpServer>();
     lightWeaver.addPlugin<LightWeaverMdns>();
     lightWeaver.setup();
-    lightWeaver.setBrightness(32);
+    lightWeaver.setBrightness(64);
 }
 
 void loop()

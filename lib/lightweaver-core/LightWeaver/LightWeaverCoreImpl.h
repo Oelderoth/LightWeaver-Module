@@ -1,5 +1,5 @@
 #pragma once
-
+#include <memory>
 #include "LightWeaverCore.h"
 #include "LightWeaverPlugin.h"
 #include "ColorSource.h"
@@ -42,6 +42,25 @@ namespace LightWeaver {
             }
         };
 
+        template <typename T>
+        struct Transition<std::unique_ptr<T>> {
+            private:
+            void onAnimationTick(const AnimationParam& param) {
+                    progress = param.easedProgress;
+                }
+            public:
+            std::unique_ptr<T> originalValue;
+            float progress;
+            Animation animation;
+            Transition(std::unique_ptr<T> originalValue):
+                originalValue(std::move(originalValue)),
+                progress(0.0f),
+                animation(Animation(500, false, std::bind(&Transition<std::unique_ptr<T>>::onAnimationTick, this, std::placeholders::_1), Easing::QuadraticInOut)) {}
+            Transition(const Transition<std::unique_ptr<T>>& other):
+                Transition(other.originalValue) {}
+
+        };
+
     // Todo: Compile time optimization of features
     //     static const bool supportsBrightness = static_cast<bool>(T_DRIVER::SupportedFeatures & SupportedFeature::BRIGHTNESS);
     //     static const bool supportsColor = static_cast<bool>(T_DRIVER::SupportedFeatures & SupportedFeature::COLOR);
@@ -49,6 +68,8 @@ namespace LightWeaver {
     //     static const bool supportsAddressable = static_cast<bool>(T_DRIVER::SupportedFeatures & SupportedFeature::ADDRESSABLE);
 
         T_DRIVER driver;
+        uint8_t pixelCount;
+        uint8_t pixelGroupSize;
         uint8_t brightness;
 
         LightWeaverPlugin** plugins = new LightWeaverPlugin*[MAXIMUM_PLUGINS];
@@ -59,29 +80,44 @@ namespace LightWeaver {
         static const int BRIGHTNESS_TRANSITION_ANIMATION = 2;
         Animator animator{3, Animator::AnimatorTimescale::MILLISECOND};
 
+        std::unique_ptr<RgbColor[]> cachedColors;
+
         ColorSource* backgroundColorSource = nullptr;
-        Transition<RgbColor>* colorTransition = nullptr;
+        Transition<std::unique_ptr<RgbColor[]>>* colorTransition = nullptr;
         Transition<uint8_t>* brightnessTransition = nullptr;
 
-        RgbColor getDisplayColor() {
-            RgbColor backgroundColor = backgroundColorSource ? backgroundColorSource->getColor() : RgbaColor(0,0,0,255);
-            if (colorTransition && colorTransition->progress < 1.0f) {
-                return RgbColor::linearBlend(colorTransition->originalValue, backgroundColor, colorTransition->progress);
+        RgbColor getDisplayColor(uint8_t pixel = 0) {
+            RgbColor backgroundColor = backgroundColorSource ? backgroundColorSource->getColor(pixel, pixelCount) : RgbaColor(0,0,0,255);
+            if (colorTransition) {
+                if (colorTransition->progress < 1.0f) {
+                    return RgbColor::linearBlend(colorTransition->originalValue[pixel], backgroundColor, colorTransition->progress);
+                } else if (colorTransition->progress == 1.0f) {
+                    delete colorTransition;
+                    colorTransition = nullptr;
+                }
             }
             return backgroundColor;
         }
 
         uint8_t getDisplayBrightness() {
-            if (brightnessTransition && brightnessTransition->progress < 1.0f) {
-                return (brightness - brightnessTransition->originalValue) * brightnessTransition->progress + brightnessTransition->originalValue;
+            if (brightnessTransition) {
+                if (brightnessTransition->progress < 1.0f) {
+                    return (brightness - brightnessTransition->originalValue) * brightnessTransition->progress + brightnessTransition->originalValue;
+                } else if (brightnessTransition->progress == 1.0f) {
+                    delete brightnessTransition;
+                    brightnessTransition = nullptr;
+                }
             }
             return brightness;
         }
 
     public:
-        LightWeaverCoreImpl(uint8_t pixelCount, uint8_t brightness = 255) : 
-            driver(T_DRIVER(pixelCount)), 
-            brightness(brightness) {}
+        LightWeaverCoreImpl(uint8_t pixelCount, uint8_t pixelGroupSize, uint8_t brightness = 255) : 
+            driver(T_DRIVER(pixelCount * pixelGroupSize)), 
+            pixelCount(pixelCount),
+            pixelGroupSize(pixelGroupSize),
+            brightness(brightness),
+            cachedColors(std::unique_ptr<RgbColor[]>(new RgbColor[pixelCount] )) {}
         virtual ~LightWeaverCoreImpl(){
             delete backgroundColorSource;
             backgroundColorSource = nullptr;
@@ -133,7 +169,10 @@ namespace LightWeaver {
             }
 
             animator.loop();
-            driver.setColor(getDisplayColor());
+            for (uint8_t i = 0; i < pixelCount; i++) {
+                cachedColors[i] = getDisplayColor(i);
+                driver.setColor(cachedColors[i], i*pixelGroupSize, pixelGroupSize);
+            }
             driver.setBrightness(getDisplayBrightness());
             driver.loop();
         }
@@ -156,10 +195,12 @@ namespace LightWeaver {
         }
 
         void startColorTransition() {
-            RgbColor color = getDisplayColor();
+            std::unique_ptr<RgbColor[]> colors = std::unique_ptr<RgbColor[]>{ new RgbColor[pixelCount] };
+            memcpy(colors.get(), cachedColors.get(), pixelCount * sizeof(RgbColor));
+
             animator.stopAnimation(COLOR_TRANSITION_ANIMATION);
             delete colorTransition;
-            colorTransition = new Transition<RgbColor>(color);
+            colorTransition = new Transition<std::unique_ptr<RgbColor[]>>(std::move(colors));
             animator.playAnimation(COLOR_TRANSITION_ANIMATION, colorTransition->animation);
         }
 

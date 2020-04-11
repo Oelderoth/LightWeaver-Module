@@ -17,6 +17,10 @@ namespace LightWeaver {
             
             virtual RgbaColor getColor() const = 0;
 
+            virtual RgbaColor getColor(uint8_t index, uint8_t count) const {
+                return getColor();
+            }
+
             virtual ColorSource* clone() const = 0;
 
             virtual const Animation* getAnimation() const {

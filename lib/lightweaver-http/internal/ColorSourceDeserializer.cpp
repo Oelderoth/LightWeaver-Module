@@ -197,7 +197,7 @@ namespace LightWeaver {
 
             RgbaColor* colors = new RgbaColor[size];
 
-            for (uint8_t i = 0; i < arr.size(); i++) {
+            for (uint8_t i = 0; i < size; i++) {
                 JsonVariant color = arr.getElement(i);
                 colors[i] = deserializeColor(color, fieldName + String(i), missingFields, invalidFields);
             }
@@ -243,6 +243,45 @@ namespace LightWeaver {
         }
         
         return GradientColorSource::Gradient(ColorSet());
+    }
+
+    PixelOffsetConfig ColorSourceDeserializer::deserializePixelOffsetConfig(const JsonVariant& obj, const StringListBuilder& fieldName, StringListBuilder& missingFields, StringListBuilder& invalidFields) {
+        if (obj.isNull()) return PixelOffsetConfig();
+
+        JsonVariant type = obj["type"];
+        requiredFieldType(type, String);
+
+        if (type == "Scale") {
+            JsonVariant scale = obj["scale"];
+            requiredFieldType(scale, float);
+            return PixelOffsetConfig(scale | 0.0f); 
+        } else if (type == "OffsetList") {
+            JsonVariant offsets = obj["offsets"];
+            requiredFieldType(offsets, JsonArray);
+            
+            if (offsets.is<JsonArray>()) {
+                uint8_t size = offsets.size();
+                float* offsetList = new float[size];
+                for (uint8_t i = 0; i < size; i++) {
+                    JsonVariant offset = offsets.getElement(i);
+                    validateRequiredField(offset, fieldName + String(i), missingFields);
+                    validateFieldType<float>(offset, fieldName + String(i), invalidFields);
+
+                    offsetList[i] = offset | 0.0f;
+                }
+                PixelOffsetConfig config{size, offsetList};
+                delete[] offsetList;
+                return config;
+            }
+
+            return PixelOffsetConfig();
+        } else if (type == "Random") {
+            // TODO: Support this
+            return PixelOffsetConfig();
+        }
+        
+        invalidFields += fieldName;
+        return PixelOffsetConfig();
     }
 
 }
@@ -341,15 +380,17 @@ namespace LightWeaver {
         JsonVariant loop = obj["loop"];
         JsonVariant gradient = obj["gradient"];
         JsonVariant easing = obj["easing"];
+        JsonVariant pixelOffsets = obj["pixelOffsets"];
 
         requiredFieldType(uid, uint32_t);
         requiredFieldType(duration, uint16_t);
         optionalFieldType(loop, bool);
         GradientColorSource::Gradient gradientData = deserializeAndValidate(gradient, deserializeGradient);
         EasingFunction easingFunction = deserializeAndValidate(easing, deserializeEasingFunction);
+        PixelOffsetConfig pixelOffsetConfig = deserializeAndValidate(pixelOffsets, deserializePixelOffsetConfig);
 
         return isValid() 
-            ? std::unique_ptr<ColorSource>{new GradientColorSource(uid, gradientData, duration, loop | false, easingFunction)} 
+            ? std::unique_ptr<ColorSource>{new GradientColorSource(uid, gradientData, duration, loop | false, easingFunction, pixelOffsetConfig)} 
             : nullptr;
         return nullptr;
     }
